@@ -90,7 +90,7 @@ parfor mc = 1:para.MC_MAX
          inter_cluster_BST_dris_mc, inter_cluster_BST_all_dris_mc, ...
          decoding_order_dris_mc, alpha_f_dris, alpha_n_dris] = ...
          run_optimization(para, channel_data, J_r_dris, J_t_dris);
-         disp(size(obj_history_dris_mc));
+        %  disp(size(obj_history_dris_mc));
         
         % Store DRIS results
         obj_history_dris(:, mc) = obj_history_dris_mc;

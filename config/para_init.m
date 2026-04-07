@@ -24,7 +24,7 @@ function [values] = para_init()
     values.K_c = 2; % NOMA users per cluster
     values.K = 2;   % number of clusters
     values.M =8;   % antennas at BS
-    values.RIS_size = [2,16]; % RIS dimensions (rows, columns)
+    values.RIS_size = [2,10]; % RIS dimensions (rows, columns)
     values.N = prod(values.RIS_size);  
 
     % Power and rate requirements
@@ -33,7 +33,7 @@ function [values] = para_init()
     values.eta = 0.7; % backscatter coefficient
     values.R_min_f = 0.01; 
     values.R_min_n = 0.1; 
-    values.R_c_min = 0.01; 
+    values.R_c_min = 0.1; 
     values.R_min_c = 0.01;
     % values.R_c_min = 0.1; 
     values.nu_n = 1; 
@@ -44,9 +44,9 @@ function [values] = para_init()
     
 
     % Iterations
-    values.MC_MAX =10;
-    values.outer_iter = 15; 
-    values.max_iter = 10; 
+    values.MC_MAX =14;
+    values.outer_iter = 10; 
+    values.max_iter = 15; 
     values.tol = 1e-5; 
 
     values.pathloss = @(d) 30 + 22*log10(d); 
