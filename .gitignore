@@ -1,0 +1,7 @@
+results/
+pre_generated_channels/
+cvx-a64/
+mosek/
+results_passive/
+external/
+.history
