@@ -27,14 +27,14 @@ function [W_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] = optimize_feas
         obj_history(iter) = obj_curr;
         % display_optimization_progress(iter, obj_curr);
         % disp(['Iteration abf ',num2str(iter) ]);
-        disp(['obj_curr abf ',num2str(obj_curr) ]);     
+        % disp(['obj_curr abf ',num2str(obj_curr) ]);     
 
         % Check convergence
         if iter > 1 && abs(obj_history(iter)) < 1e-8
             obj_history = obj_history(1:iter);
             % fprintf('  Feasibility optimization converged after %d iterations\n', iter);
-            fprintf('  Feasibility optimization converged after %d iterations\n', iter);
-            disp(['obj_curr  ',num2str(obj_history(iter)) ]);
+            % fprintf('  Feasibility optimization converged after %d iterations\n', iter);
+            % disp(['obj_curr  ',num2str(obj_history(iter)) ]);
             break;
         end
     end

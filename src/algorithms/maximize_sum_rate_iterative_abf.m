@@ -26,16 +26,16 @@ function [W_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status,obj_history] = m
         % Update history and display progress
         obj_history(iter) = obj_curr;
         % display_optimization_progress(iter, obj_curr);
-        if iter > 1
-            disp(['Iteration abf ',num2str(iter), ' Difference: ', num2str(abs(obj_history(iter)-obj_history(iter-1))) ] );
-            disp(['obj_curr abf ',num2str(obj_curr) ]);     
-        end
+        % if iter > 1
+        %     disp(['Iteration abf ',num2str(iter), ' Difference: ', num2str(abs(obj_history(iter)-obj_history(iter-1))) ] );
+        %     disp(['obj_curr abf ',num2str(obj_curr) ]);     
+        % end
 
         % Check convergence
         if iter > 1 && abs(obj_history(iter)-obj_history(iter-1)) < 1e-3
             obj_history = obj_history(1:iter);
-            fprintf('  Active BF solved after %d iterations\n', iter);
-            disp(['obj_curr  ',num2str(obj_history(iter))]);
+            % fprintf('  Active BF solved after %d iterations\n', iter);
+            % disp(['obj_curr  ',num2str(obj_history(iter))]);
             break;
         end
     end

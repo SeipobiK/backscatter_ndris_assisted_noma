@@ -114,11 +114,11 @@ parfor mc = 1:para.MC_MAX
         alpha_f_mc_dris(:, mc) = alpha_f_dris;
         alpha_n_mc_dris(:, mc) = alpha_n_dris;
         
-        disp(['MC ', num2str(mc), ' completed - Final DRIS WSR: ', num2str(obj_history_dris_mc(end))]);
-        disp('Rates for DRIS: ');
-        disp(Rates_dris);
-        disp('Objective history for DRIS: ');
-        disp(obj_history_dris_mc);
+        % disp(['MC ', num2str(mc), ' completed - Final DRIS WSR: ', num2str(obj_history_dris_mc(end))]);
+        % disp('Rates for DRIS: ');
+        % disp(Rates_dris);
+        % disp('Objective history for DRIS: ');
+        % disp(obj_history_dris_mc);
     catch ME
         fprintf('Error in MC run %d: %s\n', mc, ME.message);
         fprintf('Stack trace:\n');

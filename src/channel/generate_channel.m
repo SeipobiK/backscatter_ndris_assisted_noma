@@ -31,8 +31,8 @@ function [H, g, f] = generate_channel(para, BS_array, RIS_array)
             g_LOS(:,c,k) = steering_vector(RIS_array, userloc(k,c,2), userloc(k,c,3));
             d = userloc(k,c,1); 
             pl = sqrt(10.^(-para.pathloss(d)/10));
-            disp(['User ', num2str(k), ' in Cluster ', num2str(c), ' distance: ', num2str(d), ' m, path loss: ', num2str(pl), ...
-            ' Norm of LOS component: ', num2str(norm(g_LOS(:,c,k))^2/para.N),' Norm of NLOS component: ', num2str(norm(g_NLOS(:,c,k))^2/para.N)]);
+            % disp(['User ', num2str(k), ' in Cluster ', num2str(c), ' distance: ', num2str(d), ' m, path loss: ', num2str(pl), ...
+            % ' Norm of LOS component: ', num2str(norm(g_LOS(:,c,k))^2/para.N),' Norm of NLOS component: ', num2str(norm(g_NLOS(:,c,k))^2/para.N)]);
             g(:,c,k) = pl * ( sqrt(epsilon/(epsilon+1)) * g_LOS(:,c,k) + sqrt(1/(epsilon+1)) * g_NLOS(:,c,k) );
         end
     end

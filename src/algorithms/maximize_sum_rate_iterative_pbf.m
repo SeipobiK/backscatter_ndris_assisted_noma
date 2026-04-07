@@ -84,9 +84,9 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_history, obj_new, converged
             step_size(m) = 0.45* (1 - eig_ratio);
 
             % %% Display progress every iteration
-            fprintf('Iter %2d | Obj: %.6f | ΔObj: %.3e | λ_max: %.4e | Ratio: %.4f | Gap: %.4e | Rank≈%d\n', ...
-                    m, obj_history(m), obj_history(m)-obj_history(m-1), ...
-                    dominant_eig, eig_ratio, eig_gap, rank(V_opt));
+            % fprintf('Iter %2d | Obj: %.6f | ΔObj: %.3e | λ_max: %.4e | Ratio: %.4f | Gap: %.4e | Rank≈%d\n', ...
+            %         m, obj_history(m), obj_history(m)-obj_history(m-1), ...
+            %         dominant_eig, eig_ratio, eig_gap, rank(V_opt));
             % disp(eig_vals');
 
         else
@@ -117,7 +117,7 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_history, obj_new, converged
 
             converged   = true;
             obj_history = obj_history(1:m);
-            fprintf('Converged at iteration %d\n', m);
+            % fprintf('Converged at iteration %d\n', m);
             break;
         end
     end

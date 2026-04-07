@@ -123,7 +123,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     inter_cluster_BST_all_history(:, :, 1) = inteer_b_all;
     decoding_order_history(:, :, 1) = decoding_order;
     
-    disp(['Initial WSR = ', num2str(sum_rate)]);
+    % disp(['Initial WSR = ', num2str(sum_rate)]);
     
     %% Main iteration loop
     for iter = 1:outer_iter
@@ -159,7 +159,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
             intra_i, inteer_i, inteer_b, inteer_b_all] = compute_wsr(...
             para, H, H_c, decoding_order, alpha, w_k);
 
-        disp(['Iteration ', num2str(iter), ': noma_signal = ', num2str(sum_rate)]);
+        % disp(['Iteration ', num2str(iter), ': noma_signal = ', num2str(sum_rate)]);
  
 
         % decoding_order = determine_decoding_order(para, H, w_k);
@@ -186,7 +186,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
         decoding_order_history(:, :, iter+1) = decoding_order;
         Rates(:, :, iter+1) = R;
         
-        disp(['Outer Iteration ', num2str(iter), ': WSR = ', num2str(sum_rate)]);
+        % disp(['Outer Iteration ', num2str(iter), ': WSR = ', num2str(sum_rate)]);
         
         % % Check convergence (optional)
         % if iter > 1 && abs(obj_history(iter+1) - obj_history(iter)) < 1e-4
