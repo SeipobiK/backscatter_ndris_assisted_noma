@@ -21,8 +21,8 @@ function alpha = assign_power_by_decoding_order(para, decoding_order)
             % For 2 users per cluster
             % Weakest (position 1, decodes first) gets 70%
             % Strongest (position 2, decodes last) gets 30%
-            alpha(k, order(1)) = 0.5;   % Weaker user
-            alpha(k, order(2)) = 0.5;   % Stronger user
+            alpha(k, order(1)) = para.alpha_k_f;   % Weaker user
+            alpha(k, order(2)) = para.alpha_k_n;   % Stronger user
 
             % alpha(k, 1) = 0.5;   % Weaker user
             % alpha(k, 2) = 0.5;   % Stronger user
