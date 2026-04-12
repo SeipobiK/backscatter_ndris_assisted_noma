@@ -37,8 +37,9 @@ inter_cluster_BST_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
 inter_cluster_BST_all_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
 decoding_order_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
 
-alpha_f_mc_dris = zeros(K, MC_MAX);
-alpha_n_mc_dris = zeros(K, MC_MAX);
+alpha_history_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
+gains_it_history_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
+
 
 rng_seeds = randi(1e6, MC_MAX, 1);
 
@@ -88,7 +89,7 @@ parfor mc = 1:para.MC_MAX
          noma_interference_dris_mc, BST_interference_dris_mc, ...
          intra_cluster_dris_mc, inter_cluster_dris_mc, ...
          inter_cluster_BST_dris_mc, inter_cluster_BST_all_dris_mc, ...
-         decoding_order_dris_mc, alpha_f_dris, alpha_n_dris] = ...
+         decoding_order_dris_mc, alpha_history_dris_mc,gains_it_history_dris_mc] = ...
          run_optimization(para, channel_data, J_r_dris, J_t_dris);
         %  disp(size(obj_history_dris_mc));
         
@@ -110,9 +111,12 @@ parfor mc = 1:para.MC_MAX
         inter_cluster_BST_dris(:, :, :, mc) = inter_cluster_BST_dris_mc;
         inter_cluster_BST_all_dris(:, :, :, mc) = inter_cluster_BST_all_dris_mc;
         decoding_order_dris(:, :, :, mc) = decoding_order_dris_mc;
+        alpha_history_dris(:, :, :, mc) = alpha_history_dris_mc;
+        gains_it_history_dris(:, :, :, mc) = gains_it_history_dris_mc;
+
         
-        alpha_f_mc_dris(:, mc) = alpha_f_dris;
-        alpha_n_mc_dris(:, mc) = alpha_n_dris;
+        % alpha_f_mc_dris(:, mc) = alpha_f_dris;
+        % alpha_n_mc_dris(:, mc) = alpha_n_dris;
         
         % disp(['MC ', num2str(mc), ' completed - Final DRIS WSR: ', num2str(obj_history_dris_mc(end))]);
         % disp('Rates for DRIS: ');
@@ -186,8 +190,7 @@ results.inter_cluster_dris = inter_cluster_dris;
 results.inter_cluster_BST_dris = inter_cluster_BST_dris;
 results.inter_cluster_BST_all_dris = inter_cluster_BST_all_dris;
 results.decoding_order_dris = decoding_order_dris;
-results.alpha_f_mc_dris = alpha_f_mc_dris;
-results.alpha_n_mc_dris = alpha_n_mc_dris;
+results.alpha_history_dris = alpha_history_dris;
 results.w_k_dris = w_k_dris;
 results.theta_dris = theta_dris;
 

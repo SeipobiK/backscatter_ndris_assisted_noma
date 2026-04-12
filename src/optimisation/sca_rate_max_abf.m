@@ -9,6 +9,9 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_rate_ma
     P_max = para.P_max;
     noise = para.noise;
     R_min = para.R_min_n;
+    R_min_c = para.R_min_c;
+    FT= para.FT;
+    
     intra_i = zeros(K, K_c); % Initialize A_n vector
     inteer_i = zeros(K, K_c); % Initialize B_n vector
     inteer_b = zeros(K, K_c); % Initialize B_n vector
@@ -50,6 +53,10 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_rate_ma
 
         %% ===== MAIN LOOP =====
         for k = 1:K
+            % for j = i+1:K_c
+            %     R(k,i) - R(k,j) <= FT ;
+            %     R(k,j) - R(k,i) <= FT ;
+            % end  
 
             order_k = decoding_order(k,:); % weak → strong (ascending order)
             
@@ -123,7 +130,7 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_rate_ma
                     B_c(k)  >= inter + inter_b + noise;
                     
                     % Backscatter QoS (only for strong user)
-                    R_c(k) >= R_min ;
+                    R_c(k) >= R_min_c ;
                 end
                 
             end

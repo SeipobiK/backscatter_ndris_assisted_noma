@@ -8,6 +8,7 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] =sca_feasible
     noise = para.noise;
     R_min = para.R_min_n;
     R_min_c = para.R_min_c;
+     FT= para.FT;
 
    H= cell(K, K_c);
    H_c = cell(K, K_c);
@@ -47,6 +48,10 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] =sca_feasible
 
                 %% ===== MAIN LOOP =====
                 for k = 1:K
+                    % for j = i+1:K_c
+                    %     R(k,i) - R(k,j) <= FT + delta_g;
+                    %     R(k,j) - R(k,i) <= FT + delta_g;
+                    % end  
 
                     order_k = decoding_order(k,:); % weak → strong (ascending order)
                     

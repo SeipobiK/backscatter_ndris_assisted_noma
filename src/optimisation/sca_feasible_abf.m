@@ -10,6 +10,7 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_feasibl
     noise = para.noise;
     R_min = para.R_min_n;
     R_min_c = para.R_min_c;
+    FT= para.FT;
 
     cvx_begin   quiet
         cvx_solver mosek
@@ -51,6 +52,10 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_feasibl
                     strong_user = order_k(end);  % Strong user has highest index in decoding order
                     
                     for i = 1:K_c
+                        % for j = i+1:K_c
+                        %     R(k,i) - R(k,j) <= FT + delta_g;
+                        %     R(k,j) - R(k,i) <= FT + delta_g;
+                        % end  
 
                         %% ---------- SCA RATE (NOMA) ----------
                         % Constarint 3
@@ -126,7 +131,7 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_feasibl
                             B_c(k) + delta_g >= inter + inter_b + noise;
                             
                             % Backscatter QoS (only for strong user)
-                            R_c(k) >= R_min - delta_g;
+                            R_c(k) >= R_min_c - delta_g;
                         end
                     end
                 end

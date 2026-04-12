@@ -6,7 +6,7 @@ function W_init = initialize_beamforming(para, H_eff)
     W_init = zeros(M, K);
     
     for k = 1:K
-        h = H_eff{k, 1};  % Use primary subcarrier
+        h = H_eff{k, 2};  % Use primary subcarrier
         if norm(h) > 0
             W_init(:, k) = h / norm(h);
         else

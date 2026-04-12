@@ -4,7 +4,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
           noma_interference_history, BST_interference_history, ...
           intra_cluster_history, inter_cluster_history, ...
           inter_cluster_BST_history, inter_cluster_BST_all_history, ...
-          decoding_order_history, alpha_f, alpha_n] = run_optimization(para, channel_data, J_r, J_t)
+          decoding_order_history, alpha_history,gains_it_history] = run_optimization(para, channel_data, J_r, J_t)
     % run_optimization - Main optimization function for both DRIS and NDRIS
     % Input:
     %   para - simulation parameters
@@ -55,6 +55,9 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     inter_cluster_BST_history = zeros(K, K_c, outer_iter+1);
     inter_cluster_BST_all_history = zeros(K, K_c, outer_iter+1);
     decoding_order_history = zeros(K, K_c, outer_iter+1);
+    alpha_history = zeros(K, K_c, outer_iter+1);
+    gains_it_history = zeros(K, K_c, outer_iter+1);
+
     
     % Initialize RIS phase shifts
     Theta = initialize_ris_phases(para);
@@ -68,7 +71,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     % w_k=initialize_beamforming(para, H);
     
     % Determine decoding order
-    decoding_order = determine_decoding_order(para, H, W_init);
+    [decoding_order,gains_it] = determine_decoding_order(para, H, W_init);
         % Update decoding order
     % decoding_order = determine_decoding_order(para, H, w_k);
     alpha = assign_power_by_decoding_order(para, decoding_order);
@@ -87,6 +90,12 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     [V_opt, A_pbf, B_pbf, Ac_pbf, Bc_pbf, obj_curr, status] = ...
         optimize_feasibility_pbf(para, w_k, channel_data, decoding_order, ...
         A_abf, B_abf, Ac_abf, Bc_abf, J_r, J_t, alpha);
+
+    % [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = ...
+    %     sca_rate_max_pbf_init(para, w_k, channel_data, decoding_order, ...
+    %     A_pbf, B_pbf, Ac_pbf, Bc_pbf, alpha, J_r, J_t);
+    % disp(status);
+    % pppppp
     
     % Extract RIS phase shifts
     Theta = extract_theta(V_opt, para, H, H_c, decoding_order, alpha, w_k);
@@ -95,8 +104,10 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     [H, H_c] = build_effective_channels(para, channel_data, Theta, J_r, J_t);
     
     % Update decoding order
-    decoding_order = determine_decoding_order(para, H, w_k);
+    [decoding_order,gains_it] = determine_decoding_order(para, H, w_k);
     alpha = assign_power_by_decoding_order(para, decoding_order);
+    gains_it_history(:, :, 1) = gains_it;
+    alpha_history(:, :, 1) = alpha;
     
     % Compute initial metrics (iteration 0)
     [sum_rate, R, R_c, noma_signal, BST_signal, noma_interference, BST_interference, ...
@@ -127,6 +138,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     
     %% Main iteration loop
     for iter = 1:outer_iter
+        % disp(['Outer Iteration ', num2str(iter)]);
 
         alpha = assign_power_by_decoding_order(para, decoding_order);
          
@@ -137,27 +149,37 @@ function [Rates,obj_history, w_k_history, theta_history, ...
             maximize_sum_rate_iterative_abf(para, H, H_c, channel_data, decoding_order, ...
             A_abf, B_abf, Ac_abf, Bc_abf,alpha);       
         
-        w_k = extract_beamforming_vectors(W_opt);      
+        w_k = extract_beamforming_vectors(W_opt); 
+        % disp(['Outer Iteration ', num2str(obj_curr)]); 
+        % disp(['Outer Iteration ', num2str(iter)]);
+        
         
         % % Passive beamforming optimization-Algorithm 2
         [V_opt, A_pbf, B_pbf, Ac_pbf, Bc_pbf, ~, SR, converged] = ...
             maximize_sum_rate_iterative_pbf(para, w_k, channel_data, decoding_order, ...
             A_pbf, B_pbf, Ac_pbf, Bc_pbf,alpha, J_r, J_t);
         
-        % Extract RIS phase shifts
+        % % Extract RIS phase shifts
         Theta = extract_theta(V_opt, para, H, H_c, decoding_order,alpha, w_k);
    
         % Update effective channels
         [H, H_c] = build_effective_channels(para, channel_data, Theta, J_r, J_t);
         
         % Update decoding order
-        decoding_order = determine_decoding_order(para, H, w_k);
+        [decoding_order,gains_it]= determine_decoding_order(para, H, w_k);
+        gains_it_history(:, :, iter+1) = gains_it;
+        
+        alpha = assign_power_by_decoding_order(para, decoding_order);
+        alpha_history(:, :, iter+1) = alpha;
 
         
         % Compute metrics
         [sum_rate, R, R_c, noma_signal, BST_signal, noma_interference, BST_interference, ...
             intra_i, inteer_i, inteer_b, inteer_b_all] = compute_wsr(...
             para, H, H_c, decoding_order, alpha, w_k);
+
+        % disp("RATES");
+        % disp(R);
 
         % disp(['Iteration ', num2str(iter), ': noma_signal = ', num2str(sum_rate)]);
  

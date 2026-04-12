@@ -1,8 +1,8 @@
-function decoding_order = determine_decoding_order(para, H_eff, W)
+function [decoding_order,gains_it] = determine_decoding_order(para, H_eff, W)
     % Determine SIC decoding order based on channel gains
     K = para.K;
     K_c = para.K_c;
-    alpha = zeros(K, K_c); % Initialize alpha for power allocation (if needed)
+    gains_it= zeros(K, K_c); % Store effective channel gains for each user
  
     decoding_order = zeros(K, K_c);
     
@@ -22,6 +22,7 @@ function decoding_order = determine_decoding_order(para, H_eff, W)
                                     end
                                 end
                     gains(i) = abs(h * W(:, k))^2/(inter + para.noise);  % Effective channel gain considering interference and noise
+                    gains_it(k,i)= gains(i);
                 end
         elseif K_c == 4
 
@@ -38,6 +39,7 @@ function decoding_order = determine_decoding_order(para, H_eff, W)
                                     end
                                 end
                     gains(i) = abs(h * W(:, k))^2/(inter + para.noise);  % Effective channel gain considering interference 
+                    gains_it(k,i)= gains(i);
                 end
 
         end

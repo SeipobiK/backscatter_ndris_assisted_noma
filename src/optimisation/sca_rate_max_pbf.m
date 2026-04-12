@@ -8,6 +8,7 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] =sca_rate_max
     noise = para.noise;
     R_min = para.R_min_n;
     R_min_c = para.R_min_c;
+    FT= para.FT;
 
    H= cell(K, K_c);
    H_c = cell(K, K_c);
@@ -65,7 +66,10 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] =sca_rate_max
                     strong_user = order_k(end);  % Strong user has highest index in decoding order
                     
                     for i = 1:K_c
-
+                        % for j = i+1:K_c
+                        %     R(k,i) - R(k,j) <= FT ;
+                        %     R(k,j) - R(k,i) <= FT ;
+                        % end  
                         %% ---------- SCA RATE (NOMA) ----------
                         % Constarint 3
                         R(k,i)  <= ...
