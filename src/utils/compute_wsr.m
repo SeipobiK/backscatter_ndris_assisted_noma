@@ -40,7 +40,7 @@ function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = c
                 for j = 1:K
                     if j ~= k
                         inter   = inter  + abs(H{k,i}*w_k(:, j)).^2;
-                        inter_b = inter_b + abs(H_c{k,i}*w_k(:, j)).^2* eta;
+                        inter_b = inter_b + abs(H_c{k,i}*w_k(:, j)).^2* eta(j);
                     end
                 end
 
@@ -60,7 +60,7 @@ function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = c
 
                 %% ---------- NOMA INTERFERENCE ----------
                 B(k,i) = intra + inter + inter_b ...
-                          + abs(H_c{k,i}*w_k(:, k)).^2* eta ...
+                          + abs(H_c{k,i}*w_k(:, k)).^2* eta(k) ...
                           + noise;
                 R(k,i) = log2(1 + A(k,i)/B(k,i));
                 sum_rate = sum_rate + R(k,i);
@@ -68,7 +68,7 @@ function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = c
                 %% ===== BACKSCATTER CONSTRAINTS (ONLY FOR STRONG USER) =====
                 if i == strong_user
 
-                    A_c(k) = abs(H_c{k,i}*w_k(:, k)).^2* eta; 
+                    A_c(k) = abs(H_c{k,i}*w_k(:, k)).^2* eta(k); 
                         % Backscatter interference constraint
                     B_c(k)  = inter + inter_b + noise;
                     R_c(k) = log2(1 + A_c(k)/B_c(k));
@@ -76,18 +76,10 @@ function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = c
                 end
 
                     intra_i(k, i)=intra; % Initialize A_n vector
-                    inteer_i(k, i) = inter ; % Initialize B_n vector
-                    inteer_b(k, i) = inter_b; % Initialize B_n vector
-                    inteer_b_all(k, i) = inter_b + abs(H_c{k,i}*w_k(:, k)).^2* eta; % Initialize B_n vector
+                    inteer_i(k, i) = inter + noise + inter_b + abs(H_c{k,i}*w_k(:, k)).^2* eta(k); % Initialize B_n vector
+                    inteer_b(k, i) = A(k,i)/B(k,i); % Initialize B_n vector
+                    inteer_b_all(k, i) = inter_b + abs(H_c{k,i}*w_k(:, k)).^2* eta(k); % Initialize B_n vector
             end
         end
-
-    for k=1:K
-        
-        %     disp(['Near user: ',num2str(R(k,1))]);
-        %     disp(['Far user: ',num2str(R(k,2))]);
-        %     disp(['Backscatter user: ',num2str(R_c(k))]);
-        % % disp(R_c(k));
-    end
 
 end

@@ -10,9 +10,11 @@ function [values] = para_init()
     % values.noise = 10^(values.noise_dB/10)* (200)^4; 
     values.noise = (1e-12) * (400)^4; % override with fixed scaling
 
-    values.alpha_k_n = 0.9;
-    values.alpha_k_f = 0.1;
+    values.alpha_k_n = 0.5;
+    values.alpha_k_f = 0.5;
     values.FT=2;
+    values.rho=1;
+    values.bst_threshold=0.00010000;
 
     % User weights
     values.weights_n = 1; % near user
@@ -31,11 +33,11 @@ function [values] = para_init()
     % Power and rate requirements
 
     values.P_max =100; % maximum transmit power in Watts
-    values.eta = 0.1; % backscatter coefficient
-    values.R_min_f = 0.01; 
-    values.R_min_n = 0.1; 
-    values.R_c_min = 0.01; 
-    values.R_min_c = 0.01;
+    values.eta =[0.6,0.6]; % backscatter coefficient
+    values.R_min_f = 0.001; 
+    values.R_min_n = 0.5; 
+    values.R_c_min = 0.5; 
+    values.R_min_c = 0.5;
     % values.R_c_min = 0.1; 
     values.nu_n = 3; 
 
@@ -45,9 +47,9 @@ function [values] = para_init()
     
 
     % Iterations
-    values.MC_MAX =20;
+    values.MC_MAX =10;
     values.outer_iter = 15; 
-    values.max_iter = 10; 
+    values.max_iter = 20; 
     values.tol = 1e-5; 
 
     values.pathloss = @(d) 30 + 22*log10(d); 

@@ -8,7 +8,9 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] =sca_feasible
     noise = para.noise;
     R_min = para.R_min_n;
     R_min_c = para.R_min_c;
-     FT= para.FT;
+    FT= para.FT;
+    eh=para.bst_threshold;
+    rho=para.rho;
 
    H= cell(K, K_c);
    H_c = cell(K, K_c);
@@ -83,9 +85,11 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] =sca_feasible
                                 *(diag(channel_data.g{k,i}'*J_r)*J_t*channel_data.H_all*w_k(:, j))'));
                                 
                                 inter_b = inter_b + real(trace(V * ( diag(channel_data.g_b{k}'*J_r)*J_t*channel_data.H_all * channel_data.f{k,i}*w_k(:,j))...
-                                *(diag(channel_data.g_b{k}'*J_r)*J_t*channel_data.H_all * channel_data.f{k,i}*w_k(:,j))')) * eta;
+                                *(diag(channel_data.g_b{k}'*J_r)*J_t*channel_data.H_all * channel_data.f{k,i}*w_k(:,j))')) * eta(j);
                             end
                         end
+
+
 
                         %% ---------- INTRA-CLUSTER INTERFERENCE (NOMA) ----------
                         intra = 0;
@@ -113,13 +117,15 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] =sca_feasible
                         %% ---------- NOMA INTERFERENCE ----------
                         % Constarint 6
                         B(k,i)+delta_g >= intra + inter + inter_b ...
-                                + real(trace(V * H_c{k,i}*H_c{k,i}')) * eta ...
+                                + real(trace(V * H_c{k,i}*H_c{k,i}')) * eta(k) ...
                                 + noise;
 
                         %% ===== BACKSCATTER CONSTRAINTS (ONLY FOR STRONG USER) =====
                         if i == strong_user
+                            eh<=(1-eta(k))*rho*real(trace(V * ( diag(channel_data.g_b{k}'*J_r)*J_t*channel_data.H_all*w_k(:,k))...
+                                *(diag(channel_data.g_b{k}'*J_r)*J_t*channel_data.H_all*w_k(:,k))')) + delta_g;
                             % Backscatter signal constraint
-                            signal_c = eta * real(trace(V * H_c{k,i} * H_c{k,i}'));
+                            signal_c = eta(k) * real(trace(V * H_c{k,i} * H_c{k,i}'));
                             inv_pos(A_c(k)) <= signal_c + delta_g;
 
                             % disp(['intra user  ',num2str( intra )]);

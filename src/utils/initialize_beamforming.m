@@ -2,9 +2,9 @@ function W_init = initialize_beamforming(para, H_eff)
     % Initialize beamforming vectors using maximum ratio transmission
     K = para.K;
     M = para.M;
-    
+
     W_init = zeros(M, K);
-    
+
     for k = 1:K
         h = H_eff{k, 2};  % Use primary subcarrier
         if norm(h) > 0

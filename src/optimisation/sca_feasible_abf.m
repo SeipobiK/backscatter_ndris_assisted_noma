@@ -1,5 +1,5 @@
 function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_feasible_abf(...
-    para, H, H_c, A_prev, B_prev, A_c_prev, B_c_prev, decoding_order, alpha)
+    para, channel_data, H, H_c, A_prev, B_prev, A_c_prev, B_c_prev, decoding_order, alpha)
 
     % Parameters
     K   = para.K;
@@ -11,6 +11,8 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_feasibl
     R_min = para.R_min_n;
     R_min_c = para.R_min_c;
     FT= para.FT;
+    eh=para.bst_threshold;
+    rho=para.rho;
 
     cvx_begin   quiet
         cvx_solver mosek
@@ -43,6 +45,8 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_feasibl
                     W(:, :, k) + delta_g * eye(M) == hermitian_semidefinite(M);
                 end
 
+
+
                 %% ===== MAIN LOOP =====
                 for k = 1:K
 
@@ -69,6 +73,9 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_feasibl
                         %% QoS for NOMA users
                         % Constarint 4
                         R(k,i) >= R_min - delta_g;
+
+                        
+                        
                         
                         %% ---------- INTER-CLUSTER INTERFERENCE ----------
                         inter = 0;
@@ -77,7 +84,7 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_feasibl
                         for j = 1:K
                             if j ~= k
                                 inter   = inter  + real(trace(W(:,:,j) * H{k,i}'*H{k,i}));
-                                inter_b = inter_b + real(trace(W(:,:,j) * H_c{k,i}'*H_c{k,i})) * eta;
+                                inter_b = inter_b + real(trace(W(:,:,j) * H_c{k,i}'*H_c{k,i})) * eta(j);
                             end
                         end
 
@@ -107,13 +114,14 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_feasibl
                         %% ---------- NOMA INTERFERENCE ----------
                         % Constarint 6
                         B(k,i)+delta_g >= intra + inter + inter_b ...
-                                + real(trace(W(:,:,k) * H_c{k,i}'*H_c{k,i})) * eta ...
+                                + real(trace(W(:,:,k) * H_c{k,i}'*H_c{k,i})) * eta(k) ...
                                 + noise;
 
                         %% ===== BACKSCATTER CONSTRAINTS (ONLY FOR STRONG USER) =====
                         if i == strong_user
+                            eh<=(1-eta(k))*rho*real(trace(W(:,:,k) * (H_c{k,i}/channel_data.f{k,i})'*(H_c{k,i}/channel_data.f{k,i})))+delta_g;
                             % Backscatter signal constraint
-                            signal_c = eta * real(trace(W(:,:,k) * H_c{k,i}' * H_c{k,i}));
+                            signal_c = eta(k) * real(trace(W(:,:,k) * H_c{k,i}' * H_c{k,i}));
                             inv_pos(A_c(k)) <= signal_c + delta_g;
 
                             % disp(['intra user  ',num2str( intra )]);

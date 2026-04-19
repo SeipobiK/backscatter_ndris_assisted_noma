@@ -4,7 +4,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
           noma_interference_history, BST_interference_history, ...
           intra_cluster_history, inter_cluster_history, ...
           inter_cluster_BST_history, inter_cluster_BST_all_history, ...
-          decoding_order_history, alpha_history,gains_it_history] = run_optimization(para, channel_data, J_r, J_t)
+          decoding_order_history, alpha_history,gains_it_history] = run_opt_pac(para, channel_data, J_r, J_t)
     % run_optimization - Main optimization function for both DRIS and NDRIS
     % Input:
     %   para - simulation parameters
@@ -138,25 +138,30 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     
     %% Main iteration loop
     for iter = 1:outer_iter
+        % disp(['Outer Iteration ', num2str(iter)]);
+
+        %% Power allocation factors Optimisation
+        if iter>2
+            alpha = power_allocation_opt(...
+            para, H, H_c,decoding_order,w_k);
+        else
+          alpha = assign_power_by_decoding_order(para, decoding_order);
+        end
+          disp(alpha);
 
 
-        alpha = assign_power_by_decoding_order(para, decoding_order);
 
-        alpha_ = power_allocation_opt(...
-            para, H, H_c,decoding_order,w_k)
-            disp(alpha_);
+
    
-         
         [H, H_c] = build_effective_channels(para, channel_data, Theta, J_r, J_t); 
 
         %%  Active beamforming optimization-Algorithm  1
-        [W_opt, A_abf, B_abf, Ac_abf, Bc_abf, obj_curr, status, ~] = ...
-            maximize_sum_rate_iterative_abf(para, H, H_c, channel_data, decoding_order, ...
-            A_abf, B_abf, Ac_abf, Bc_abf,alpha);       
-        
-        w_k = extract_beamforming_vectors(W_opt); 
-
-                
+            [W_opt, A_abf, B_abf, Ac_abf, Bc_abf, obj_curr, status, ~] = ...
+                maximize_sum_rate_iterative_abf(para, H, H_c, channel_data, decoding_order, ...
+                A_abf, B_abf, Ac_abf, Bc_abf,alpha);       
+            
+            w_k = extract_beamforming_vectors(W_opt); 
+            
         %% Passive beamforming optimization-Algorithm 2
         [V_opt, A_pbf, B_pbf, Ac_pbf, Bc_pbf, ~, SR, converged] = ...
             maximize_sum_rate_iterative_pbf(para, w_k, channel_data, decoding_order, ...
@@ -165,8 +170,8 @@ function [Rates,obj_history, w_k_history, theta_history, ...
             % % Extract RIS phase shifts
             Theta = extract_theta(V_opt, para, H, H_c, decoding_order,alpha, w_k);
    
-            % Update effective channels
-            [H, H_c] = build_effective_channels(para, channel_data, Theta, J_r, J_t);
+        % Update effective channels
+        [H, H_c] = build_effective_channels(para, channel_data, Theta, J_r, J_t);
         
         %% Update decoding order
         [decoding_order,gains_it]= determine_decoding_order(para, H, w_k);
@@ -175,22 +180,12 @@ function [Rates,obj_history, w_k_history, theta_history, ...
         alpha_history(:, :, iter+1) = alpha;
 
         
-        %% Compute metrics
+        %% Compute sum rate
         [sum_rate, R, R_c, noma_signal, BST_signal, noma_interference, BST_interference, ...
             intra_i, inteer_i, inteer_b, inteer_b_all] = compute_wsr(...
             para, H, H_c, decoding_order, alpha, w_k);
-
-        % disp("RATES");
-        % disp(R);
-
-        % disp(['Iteration ', num2str(iter), ': noma_signal = ', num2str(sum_rate)]);
- 
-
-        % decoding_order = determine_decoding_order(para, H, w_k);
-
-
     
-        % Store resultsss
+        % Store results
         obj_history(iter+1) = sum_rate;
         rate_f_history(:, iter+1) = R(:, 2);
         rate_n_history(:, iter+1) = R(:, 1);
@@ -242,34 +237,3 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     end
     % disp(['Size of obj_history: ', num2str(size(obj_history))]);
 end
-
-
-
-        % Active beamforming optimization
-        % disp(['active beamforming Vectors... ', num2str(iter)]);
-        % % disp(w_k);
-        % disp('active beamforming Vectors...');
-
-
-        % disp('Passive beamforming Vectors...');
-        % % disp(diag(Theta));
-        % disp('Passive beamforming Vectors...');
-
-
-        % disp(['Ennd BF... ', num2str(iter)]);
-
-
-    %     disp(['Iteration======================= ', num2str(iter), ': Status = ', status]);
-    %     for k=1:K
-    %         disp(['Cluster ', num2str(k)]);
-    %         for i=1:K_c  
-    %             sinr=2^R(k, i)-1;
-
-    %              disp(['User  ', num2str(i),' Alpha = ', num2str(alpha(k, i)), ' : noma_signal = ', num2str(noma_signal(k, i)/alpha(k, i)) ...
-    %              , ' : Intra interference ', num2str(intra_i(k, i)), ' User rate = : ', num2str(R(k, i)),  ': SINR =  ', num2str(sinr)]);      
-    %         end   
-    %    end
-    %    disp('Decoding order: ');
-    %    disp(decoding_order);
-    %    disp(['Iteration======================= ', num2str(iter), ': Status = ', status]);   
-    %    verify_intra_interference(decoding_order, noma_signal, alpha, intra_i);

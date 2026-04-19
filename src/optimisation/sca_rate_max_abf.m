@@ -1,5 +1,5 @@
 function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_rate_max_abf(...
-    para, H, H_c, A_prev, B_prev, A_c_prev, B_c_prev, decoding_order, alpha)
+    para,channel_data, H, H_c, A_prev, B_prev, A_c_prev, B_c_prev, decoding_order, alpha)
 
     % Parameters
     K   = para.K;
@@ -11,6 +11,8 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_rate_ma
     R_min = para.R_min_n;
     R_min_c = para.R_min_c;
     FT= para.FT;
+    eh=para.bst_threshold;
+    rho=para.rho;
     
     intra_i = zeros(K, K_c); % Initialize A_n vector
     inteer_i = zeros(K, K_c); % Initialize B_n vector
@@ -83,10 +85,12 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_rate_ma
                 for j = 1:K
                     if j ~= k
                         inter   = inter  + real(trace(W(:,:,j) * H{k,i}'*H{k,i}));
-                        inter_b = inter_b + real(trace(W(:,:,j) * H_c{k,i}'*H_c{k,i})) * eta;
+                        inter_b = inter_b + real(trace(W(:,:,j) * H_c{k,i}'*H_c{k,i})) * eta(j);
                     end
                 end
 
+                
+                
                 %% ---------- INTRA-CLUSTER INTERFERENCE (NOMA) ----------
                 intra = 0;
                 pos = find(order_k == i);
@@ -107,13 +111,14 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_rate_ma
 
                 %% ---------- NOMA INTERFERENCE ----------
                 B(k,i) >= intra + inter + inter_b ...
-                          + real(trace(W(:,:,k) * H_c{k,i}'*H_c{k,i})) * eta ...
+                          + real(trace(W(:,:,k) * H_c{k,i}'*H_c{k,i})) * eta(k) ...
                           + noise;
 
                 %% ===== BACKSCATTER CONSTRAINTS (ONLY FOR STRONG USER) =====
                 if i == strong_user
+                    eh<=(1-eta(k))*rho*real(trace(W(:,:,k) * (H_c{k,i}/channel_data.f{k,i})'*(H_c{k,i}/channel_data.f{k,i})));
                     % Backscatter signal constraint
-                    signal_c = eta * real(trace(W(:,:,k) * H_c{k,i}' * H_c{k,i}));
+                    signal_c = eta(k) * real(trace(W(:,:,k) * H_c{k,i}' * H_c{k,i}));
                     % disp(['user doing backscatter: ',num2str(strong_user )]);
         
                     

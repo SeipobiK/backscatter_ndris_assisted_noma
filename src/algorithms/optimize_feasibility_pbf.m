@@ -28,8 +28,8 @@ function [V_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] = optimize_feas
         % Update history and display progress
         obj_history(iter) = obj_curr;
         % display_optimization_progress(iter, obj_curr);
-        % disp(['Iteration pbf  ',num2str(iter) ]);
-        % disp(['obj_curr pbf  ',num2str(obj_curr) ]);
+        disp(['Iteration pbf  ',num2str(iter) ]);
+        disp(['obj_curr pbf  ',num2str(obj_curr) ]);
         
         % Check convergence
         if iter > 1 && abs(obj_history(iter)) < 1e-9

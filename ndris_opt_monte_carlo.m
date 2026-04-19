@@ -1,8 +1,8 @@
 clear all; clc;
 addpath(genpath(pwd));
-rng(); % For reproducibility
-diary('results_passive/output_log_test.txt')
-diary on
+rng(2022); % For reproducibility
+% diary('results_passive/output_log_test.txt')
+% diary on
 % Initialize parameters
 para = para_init();
 [BS_array, RIS_array] = generate_arrays(para);
@@ -37,26 +37,27 @@ inter_cluster_BST_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
 inter_cluster_BST_all_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
 decoding_order_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
 
-alpha_f_mc_dris = zeros(K, MC_MAX);
-alpha_n_mc_dris = zeros(K, MC_MAX);
+alpha_history_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
+gains_it_history_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
+
 
 rng_seeds = randi(1e6, MC_MAX, 1);
 
-% Create results directory
+% % Create results directory
 results_dir = 'results_passive';
 if ~exist(results_dir, 'dir')
     mkdir(results_dir);
 end
 
 % % % Start parallel pool
-% if isempty(gcp('nocreate'))
-%     num_workers = 14;
-%     pool = parpool('local', num_workers);
-%     fprintf('Using %d workers for parallel processing\n', pool.NumWorkers);
-% else
-%     pool = gcp;
-%     fprintf('Existing pool with %d workers found\n', pool.NumWorkers);
-% end
+if isempty(gcp('nocreate'))
+    num_workers = 14;
+    pool = parpool('local', num_workers);
+    fprintf('Using %d workers for parallel processing\n', pool.NumWorkers);
+else
+    pool = gcp;
+    fprintf('Existing pool with %d workers found\n', pool.NumWorkers);
+end
 
 tic;
 [BS_array_par, RIS_array_par] = generate_arrays(para);
@@ -65,12 +66,13 @@ tic;
 fprintf('Starting Monte Carlo iterations...\n');
 num_mc_iterations=1;
 
-for mc = 4:4
-    % try
+parfor mc = 1:para.MC_MAX
+    try
         fprintf('Monte Carlo Iteration %d/%d\n', mc, num_mc_iterations);
         
         % Set random seed for reproducibility
         rng(rng_seeds(mc), 'twister');
+
         
         % Generate channels
         [H_local, g_local, f_local] = generate_channel(para, BS_array_par, RIS_array_par);
@@ -88,9 +90,9 @@ for mc = 4:4
          noma_interference_dris_mc, BST_interference_dris_mc, ...
          intra_cluster_dris_mc, inter_cluster_dris_mc, ...
          inter_cluster_BST_dris_mc, inter_cluster_BST_all_dris_mc, ...
-         decoding_order_dris_mc, alpha_f_dris, alpha_n_dris] = ...
-         channel_verification(para, channel_data, J_r_dris, J_t_dris);
-         disp(size(obj_history_dris_mc));
+         decoding_order_dris_mc, alpha_history_dris_mc,gains_it_history_dris_mc] = ...
+         run_optimization(para, channel_data, J_r_dris, J_t_dris);
+        %  disp(size(obj_history_dris_mc));
         
         % Store DRIS results
         obj_history_dris(:, mc) = obj_history_dris_mc;
@@ -110,23 +112,26 @@ for mc = 4:4
         inter_cluster_BST_dris(:, :, :, mc) = inter_cluster_BST_dris_mc;
         inter_cluster_BST_all_dris(:, :, :, mc) = inter_cluster_BST_all_dris_mc;
         decoding_order_dris(:, :, :, mc) = decoding_order_dris_mc;
+        alpha_history_dris(:, :, :, mc) = alpha_history_dris_mc;
+        gains_it_history_dris(:, :, :, mc) = gains_it_history_dris_mc;
+
         
-        alpha_f_mc_dris(:, mc) = alpha_f_dris;
-        alpha_n_mc_dris(:, mc) = alpha_n_dris;
+        % alpha_f_mc_dris(:, mc) = alpha_f_dris;
+        % alpha_n_mc_dris(:, mc) = alpha_n_dris;
         
-        disp(['MC ', num2str(mc), ' completed - Final DRIS WSR: ', num2str(obj_history_dris_mc(end))]);
-        disp('Rates for DRIS: ');
-        disp(Rates_dris);
-        disp('Objective history for DRIS: ');
-        disp(obj_history_dris_mc);
-    % catch ME
-    %     fprintf('Error in MC run %d: %s\n', mc, ME.message);
-    %     fprintf('Stack trace:\n');
-    %     for i = 1:length(ME.stack)
-    %         fprintf('  %s at line %d\n', ME.stack(i).name, ME.stack(i).line);
-    %     end
-    %     obj_history_dris(:, mc) = NaN;
-    % end
+        % disp(['MC ', num2str(mc), ' completed - Final DRIS WSR: ', num2str(obj_history_dris_mc(end))]);
+        % disp('Rates for DRIS: ');
+        % disp(Rates_dris);
+        % disp('Objective history for DRIS: ');
+        % disp(obj_history_dris_mc);
+    catch ME
+        fprintf('Error in MC run %d: %s\n', mc, ME.message);
+        fprintf('Stack trace:\n');
+        for i = 1:length(ME.stack)
+            fprintf('  %s at line %d\n', ME.stack(i).name, ME.stack(i).line);
+        end
+        obj_history_dris(:, mc) = NaN;
+    end
 end
 % diary off 
 toc;
@@ -147,9 +152,8 @@ fig = figure;
 x = 0:outer_iter;
 
 % DRIS plot with error bars
-errorbar(x, avg_dris, std_dris, '-s', 'DisplayName', 'DRIS', ...
-    'LineWidth', 2, 'MarkerSize', 8, 'Color', [0.2, 0.2, 0.8], ...
-    'CapSize', 10);
+plot(x, avg_dris, '-s', 'DisplayName', 'DRIS', ...
+    'LineWidth', 2, 'MarkerSize', 8, 'Color', [0.2, 0.2, 0.8]);
 hold off;
 
 legend('Location', 'southeast');
@@ -187,8 +191,7 @@ results.inter_cluster_dris = inter_cluster_dris;
 results.inter_cluster_BST_dris = inter_cluster_BST_dris;
 results.inter_cluster_BST_all_dris = inter_cluster_BST_all_dris;
 results.decoding_order_dris = decoding_order_dris;
-results.alpha_f_mc_dris = alpha_f_mc_dris;
-results.alpha_n_mc_dris = alpha_n_mc_dris;
+results.alpha_history_dris = alpha_history_dris;
 results.w_k_dris = w_k_dris;
 results.theta_dris = theta_dris;
 

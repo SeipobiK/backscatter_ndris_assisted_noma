@@ -15,7 +15,7 @@ function [W_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] = optimize_feas
     for iter = 1:max_iterations
         % Call feasibility optimization solver
         % Note: You need to ensure your 'feasible' function accepts these parameters
-   [W_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] = sca_feasible_abf(para, H, H_c, A_opt, B_opt, Ac_opt, Bc_opt, decoding_order,alpha);
+   [W_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] = sca_feasible_abf(para,channel_data, H, H_c, A_opt, B_opt, Ac_opt, Bc_opt, decoding_order,alpha);
         
         % Check solver status
         if ~strcmp(status, 'Solved')
@@ -26,11 +26,11 @@ function [W_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] = optimize_feas
         % Update history and display progress
         obj_history(iter) = obj_curr;
         % display_optimization_progress(iter, obj_curr);
-        % disp(['Iteration abf ',num2str(iter) ]);
-        % disp(['obj_curr abf ',num2str(obj_curr) ]);     
+        disp(['Iteration abf ',num2str(iter) ]);
+        disp(['obj_curr abf ',num2str(obj_curr) ]);     
 
         % Check convergence
-        if iter > 1 && abs(obj_history(iter)) < 1e-8
+        if iter > 1 && abs(obj_history(iter)) < 1e-7
             obj_history = obj_history(1:iter);
             % fprintf('  Feasibility optimization converged after %d iterations\n', iter);
             % fprintf('  Feasibility optimization converged after %d iterations\n', iter);

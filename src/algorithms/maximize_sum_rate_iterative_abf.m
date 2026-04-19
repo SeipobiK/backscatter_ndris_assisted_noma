@@ -15,7 +15,7 @@ function [W_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status,obj_history] = m
     for iter = 1:max_iterations
         % Call feasibility optimization solver
         % Note: You need to ensure your 'feasible' function accepts these parameters
-   [W_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] = sca_rate_max_abf(para, H, H_c, A_opt, B_opt, Ac_opt, Bc_opt, decoding_order, alpha);
+   [W_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] = sca_rate_max_abf(para,channel_data, H, H_c, A_opt, B_opt, Ac_opt, Bc_opt, decoding_order, alpha);
         
         % Check solver status
         if ~strcmp(status, 'Solved')

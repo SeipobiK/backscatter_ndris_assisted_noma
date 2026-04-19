@@ -21,6 +21,7 @@ function [decoding_order,gains_it] = determine_decoding_order(para, H_eff, W)
                                         inter_b = inter_b + abs(h * W(:, j))^2 * para.eta;
                                     end
                                 end
+                    
                     gains(i) = abs(h * W(:, k))^2/(inter + para.noise);  % Effective channel gain considering interference and noise
                     gains_it(k,i)= gains(i);
                 end
