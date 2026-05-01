@@ -7,9 +7,9 @@ function [beta, t, zeta, s] = update_aux_variables_pac_rc(...
     
     % Initialize
     beta = zeros(K, K_c);
-    t = zeros(K, K_c);
+    y = zeros(K, K_c);
     zeta = zeros(K, 1);
-    s = zeros(K, 1);
+    z = zeros(K, 1);
     
     for k = 1:K
         order_k = decoding_order(k, :);

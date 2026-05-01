@@ -1,5 +1,5 @@
 function [V_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] = optimize_feasibility_pbf(para,w_k,channel_data,decoding_order,...
-     A, B, Ac, Bc,J_r,J_t,alpha)
+     A, B, Ac, Bc,J_r,J_t,alpha,eta)
     % Perform feasibility optimization with iterative updates
     
     max_iterations = para.max_iter;
@@ -15,7 +15,7 @@ function [V_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] = optimize_feas
         % Call feasibility optimization solver
         % Note: You need to ensure your 'feasible' function accepts these parameters
    [V_opt, A_opt, B_opt, Ac_opt, Bc_opt, obj_curr, status] =sca_feasible_pbf(para,w_k,channel_data,decoding_order,...
-    A_opt, B_opt, Ac_opt, Bc_opt,alpha,J_r,J_t);
+    A_opt, B_opt, Ac_opt, Bc_opt,alpha,J_r,J_t,eta);
 
     % fprintf('Iter %3d | Objective: %.4e', iter, obj_curr);
         

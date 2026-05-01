@@ -4,7 +4,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
           noma_interference_history, BST_interference_history, ...
           intra_cluster_history, inter_cluster_history, ...
           inter_cluster_BST_history, inter_cluster_BST_all_history, ...
-          decoding_order_history, alpha_history,gains_it_history,eta_history] = run_optimization(para, channel_data, J_r, J_t)
+          decoding_order_history, alpha_history,gains_it_history,eta_history] = run_optimization_fixed_pacrc(para, channel_data, J_r, J_t)
     % run_optimization - Main optimization function for both DRIS and NDRIS
     % Input:
     %   para - simulation parameters
@@ -177,7 +177,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
             end
             % disp(['After ABF and PBF optimization, before eta update: WSR = ', num2str(sum_rate_)]);   
 
-            [eta,alpha]  = solve_eta_AO(para, H, H_c,h_c_eh, decoding_order, alpha, w_k,eta);
+            % [eta,alpha]  = solve_eta_AO(para, H, H_c,h_c_eh, decoding_order, alpha, w_k,eta);
         
         %% Update decoding order
         [decoding_order,gains_it]= determine_decoding_order(para, H, w_k);
@@ -240,34 +240,3 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     
     % disp(['Size of obj_history: ', num2str(size(obj_history))]);
 end
-
-
-
-        % Active beamforming optimization
-        % disp(['active beamforming Vectors... ', num2str(iter)]);
-        % % disp(w_k);
-        % disp('active beamforming Vectors...');
-
-
-        % disp('Passive beamforming Vectors...');
-        % % disp(diag(Theta));
-        % disp('Passive beamforming Vectors...');
-
-
-        % disp(['Ennd BF... ', num2str(iter)]);
-
-
-    %     disp(['Iteration======================= ', num2str(iter), ': Status = ', status]);
-    %     for k=1:K
-    %         disp(['Cluster ', num2str(k)]);
-    %         for i=1:K_c  
-    %             sinr=2^R(k, i)-1;
-
-    %              disp(['User  ', num2str(i),' Alpha = ', num2str(alpha(k, i)), ' : noma_signal = ', num2str(noma_signal(k, i)/alpha(k, i)) ...
-    %              , ' : Intra interference ', num2str(intra_i(k, i)), ' User rate = : ', num2str(R(k, i)),  ': SINR =  ', num2str(sinr)]);      
-    %         end   
-    %    end
-    %    disp('Decoding order: ');
-    %    disp(decoding_order);
-    %    disp(['Iteration======================= ', num2str(iter), ': Status = ', status]);   
-    %    verify_intra_interference(decoding_order, noma_signal, alpha, intra_i);

@@ -1,6 +1,6 @@
 function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_history, obj_new, converged] = ...
     maximize_sum_rate_iterative_pbf(para, w_k, channel_data, decoding_order, ...
-    A_opt, B_opt, A_c_opt, B_c_opt, alpha, J_r, J_t)
+    A_opt, B_opt, A_c_opt, B_c_opt, alpha, J_r, J_t,eta)
 
     %% Parameters
     max_iter   = 25;
@@ -22,7 +22,7 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_history, obj_new, converged
     %% ---- Initial SCA solve ----
     [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = ...
         sca_rate_max_pbf_init(para, w_k, channel_data, decoding_order, ...
-        A_opt, B_opt, A_c_opt, B_c_opt, alpha, J_r, J_t);
+        A_opt, B_opt, A_c_opt, B_c_opt, alpha, J_r, J_t,eta);
 
     if ~strcmp(status, 'Solved')
         warning('Initial SCA problem not solved');
@@ -54,7 +54,7 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_history, obj_new, converged
         [V_new, A_new, B_new, A_c_new, B_c_new, obj_new, cvx_status] = ...
             sca_rate_max_pbf(para, w_k, channel_data, decoding_order, ...
             A_opt, B_opt, A_c_opt, B_c_opt, alpha, J_r, J_t, ...
-            max_eig_vec(:,m-1), relax_parameter(m-1));
+            max_eig_vec(:,m-1), relax_parameter(m-1),eta);
 
         if strcmp(cvx_status, 'Solved')
 

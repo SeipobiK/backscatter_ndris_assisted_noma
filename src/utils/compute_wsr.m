@@ -1,10 +1,10 @@
 function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = compute_wsr(...
-    para, H, H_c,decoding_order, alpha,w_k)
+    para, H, H_c,decoding_order, alpha,w_k,eta)
    % Parameters
     K   = para.K;
     K_c = para.K_c;
     M   = para.M;
-    eta = para.eta;
+    % eta = para.eta;
     P_max = para.P_max;
     noise = para.noise;
 
@@ -54,6 +54,8 @@ function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = c
                     intra = intra + alpha(k,j_user) * H_i;
                 end
 
+                 % Minimum SINR for near user
+
                 %% ---------- NOMA SIGNAL ----------
                 signal =  abs(H{k,i}*w_k(:, k)).^2 * alpha(k,i);
                 A(k,i)= signal ;
@@ -64,6 +66,65 @@ function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = c
                           + noise;
                 R(k,i) = log2(1 + A(k,i)/B(k,i));
                 sum_rate = sum_rate + R(k,i);
+                
+                gamma_noma=2^para.R_min_n - 1;
+
+                weak_user   = order_k(1);
+                strong_user = order_k(end);
+
+                H_weak   = abs(H{k,weak_user}   * w_k(:,k))^2;
+                H_strong = abs(H{k,strong_user} * w_k(:,k))^2;
+
+                Hc_weak   = abs(H_c{k,weak_user}   * w_k(:,k))^2;
+                Hc_strong = abs(H_c{k,strong_user} * w_k(:,k))^2;
+
+                % If inter_b already includes own BD, subtract own term to avoid double counting
+                inter_b_weak_others   = inter_b - Hc_weak   * eta(k);
+                inter_b_strong_others = inter_b - Hc_strong * eta(k);
+
+                alpha_min_weak = gamma_noma * ( ...
+                    H_weak + Hc_weak*eta(k) + inter_b_weak_others + inter + noise ) ...
+                    / (H_weak * (1 + gamma_noma));
+
+                alpha_min_strong = gamma_noma * ( ...
+                    Hc_strong*eta(k) + inter_b_strong_others + inter + noise ) ...
+                    / H_strong;
+
+                alpha_max_weak = 1 - alpha_min_strong;
+                % Since alpha_weak + alpha_strong = 1
+                alpha_max_weak   = 1 - alpha_min_strong;
+                alpha_max_strong = 1 - alpha_min_weak;
+
+                fprintf('\nCluster %d\n', k);
+                fprintf('Weak user   = %d\n', weak_user);
+                fprintf('Strong user = %d\n', strong_user);
+
+                fprintf('alpha_weak   range: [%.6f, %.6f]\n', ...
+                    alpha_min_weak, alpha_max_weak);
+
+                fprintf('alpha_strong range: [%.6f, %.6f]\n', ...
+                    alpha_min_strong, alpha_max_strong);
+
+                fprintf('Current alpha weak   = %.6f\n', alpha(k,weak_user));
+                fprintf('Current alpha strong = %.6f\n', alpha(k,strong_user));
+
+
+                 alpha_ = power_allocation_opt(...
+                 para, H, H_c,decoding_order,w_k);
+                fprintf('Current alpha weak (from assign)  = %.6f\n', alpha_(k,weak_user));
+                fprintf('Current alpha strong (from assign) = %.6f\n', alpha_(k,strong_user));
+
+                if alpha_min_weak <= alpha_max_weak && alpha_min_strong <= alpha_max_strong
+                    fprintf('Status: FEASIBLE\n');
+                else
+                    fprintf('Status: INFEASIBLE\n');
+                end              
+
+                    order_k = decoding_order(k,:);
+ 
+
+                
+               
 
                 %% ===== BACKSCATTER CONSTRAINTS (ONLY FOR STRONG USER) =====
                 if i == strong_user
@@ -73,7 +134,9 @@ function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = c
                     B_c(k)  = inter + inter_b + noise;
                     R_c(k) = log2(1 + A_c(k)/B_c(k));
                     sum_rate = sum_rate + R_c(k);
+                     
                 end
+            
 
                     intra_i(k, i)=intra; % Initialize A_n vector
                     inteer_i(k, i) = inter + noise + inter_b + abs(H_c{k,i}*w_k(:, k)).^2* eta(k); % Initialize B_n vector

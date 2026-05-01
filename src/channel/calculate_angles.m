@@ -24,7 +24,7 @@ radii = [5,5,5]; % radius for each cluster
                  1, 26, 0;  % NOMA user 2
                  -2, 25, 0;  % NOMA user 3
                  2, 24, 0;   % NOMA user 4
-                 2, 27, 0];  % BD (Backscatter Device)
+                 0, 27, 0];  % BD (Backscatter Device)
 
     % ----- Cluster 2 -----
     % BD is at index 5 (last user)
@@ -32,7 +32,7 @@ radii = [5,5,5]; % radius for each cluster
                  3, 30, 0;   % NOMA user 2
                  6, 30, 0;   % NOMA user 3
                  7, 30, 0;   % NOMA user 4
-                 4, 29, 0];  % BD (Backscatter Device)
+                 5, 29, 0];  % BD (Backscatter Device)
 
 
 

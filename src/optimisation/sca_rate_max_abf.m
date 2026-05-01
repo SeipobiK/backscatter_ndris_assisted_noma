@@ -1,11 +1,11 @@
 function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_rate_max_abf(...
-    para,channel_data, H, H_c, A_prev, B_prev, A_c_prev, B_c_prev, decoding_order, alpha)
+    para,channel_data, H, H_c, A_prev, B_prev, A_c_prev, B_c_prev, decoding_order, alpha,eta)
 
     % Parameters
     K   = para.K;
     K_c = para.K_c;
     M   = para.M;
-    eta = para.eta;
+    % eta = para.eta;
     P_max = para.P_max;
     noise = para.noise;
     R_min = para.R_min_n;

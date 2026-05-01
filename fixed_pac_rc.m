@@ -91,7 +91,8 @@ parfor mc = 1:para.MC_MAX
          intra_cluster_dris_mc, inter_cluster_dris_mc, ...
          inter_cluster_BST_dris_mc, inter_cluster_BST_all_dris_mc, ...
          decoding_order_dris_mc, alpha_history_dris_mc,gains_it_history_dris_mc,eta_history_dris_mc] = ...
-         run_optimization(para, channel_data, J_r_dris, J_t_dris);
+         run_optimization_fixed_pacrc(para, channel_data, J_r_dris, J_t_dris);
+         
         %  disp(size(obj_history_dris_mc));
         
         % Store DRIS results

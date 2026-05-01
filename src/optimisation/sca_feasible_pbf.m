@@ -1,10 +1,10 @@
 function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] =sca_feasible_pbf(para,w_k,channel_data,decoding_order,...
-    A_prev, B_prev, A_c_prev, B_c_prev,alpha,J_r,J_t)
+    A_prev, B_prev, A_c_prev, B_c_prev,alpha,J_r,J_t,eta)
     % Parameters
     K   = para.K;
     K_c = para.K_c;
     N   = para.N;
-    eta = para.eta;
+    % eta = para.eta;
     noise = para.noise;
     R_min = para.R_min_n;
     R_min_c = para.R_min_c;
