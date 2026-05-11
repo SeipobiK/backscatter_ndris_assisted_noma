@@ -1,6 +1,6 @@
 function [eta,p_alloc,obj_rc_pac] = solve_eta_AO(para, H, H_c, h_c_eh, decoding_order, p_alloc, w_k, eta)
 
-    max_iter = 10;
+    max_iter = 20;
     epsilon  = para.epsilon;
 
 
@@ -16,7 +16,7 @@ function [eta,p_alloc,obj_rc_pac] = solve_eta_AO(para, H, H_c, h_c_eh, decoding_
         % % Step 2: jointly update alpha and eta
         [p_alloc, eta, obj_lbt] = ldt_qt_cvx_pac_rc( ...
             para, H, H_c, h_c_eh, I_tot, beta, y, zeta, z, decoding_order, w_k);
-    %     gamma_noma = 2^para.R_min_n - 1;
+        % gamma_noma = 2^para.R_min_n - 1;
 
     %     [p_alloc, obj_lbt] = optimize_alpha_cvx( ...
     % para, H, H_c, I_tot, beta, y, decoding_order, w_k, eta);

@@ -1,8 +1,7 @@
 clear all; clc;
 addpath(genpath(pwd));
 rng(2022); % For reproducibility
-diary('results_passive/output_log_test.txt')
-diary on
+
 % Initialize parameters
 para = para_init();
 [BS_array, RIS_array] = generate_arrays(para);
@@ -135,7 +134,6 @@ parfor mc = 1:para.MC_MAX
         obj_history_dris(:, mc) = NaN;
     end
 end
-% diary off 
 toc;
 
 % Calculate averages (excluding NaN runs)
@@ -148,6 +146,36 @@ else
     std_dris = NaN(outer_iter+1, 1);
     fprintf('Warning: No valid DRIS runs\n');
 end
+
+valid_mc = valid_dris;
+
+num_valid = length(valid_mc);
+outage_count = 0;
+
+for idx = 1:num_valid
+
+    mc = valid_mc(idx);
+
+    % Final rates from last AO iteration
+    Rn_final = rate_n_mc_dris_outer(:, end, mc);
+    Rf_final = rate_f_mc_dris_outer(:, end, mc);
+    Rc_final = rate_c_mc_dris_outer(:, end, mc);
+
+    % Check outage
+    noma_outage = any(Rn_final < para.R_min_n) || ...
+                  any(Rf_final < para.R_min_n);
+
+    bst_outage = any(Rc_final < 0.1);
+
+    if noma_outage || bst_outage
+        outage_count = outage_count + 1;
+    end
+end
+
+P_out = outage_count / num_valid;
+
+fprintf('Outage Probability = %.4f\n', P_out);
+fprintf('Valid MC runs used = %d\n', num_valid);
 
 % Plot results with error bars
 fig = figure;

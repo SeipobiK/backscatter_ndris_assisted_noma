@@ -25,7 +25,7 @@ function [p_alloc, obj] = optimize_alpha_cvx( ...
 
     %% ===== CVX PROBLEM: alpha only =====
     cvx_begin quiet
-        % cvx_solver mosek
+        cvx_solver mosek
         % cvx_precision high
 
 

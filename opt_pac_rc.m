@@ -1,8 +1,7 @@
 clear all; clc;
 addpath(genpath(pwd));
-rng(2022); % For reproducibility
-diary('results_passive/output_log_test.txt')
-diary on
+rng(); % For reproducibility
+
 % Initialize parameters
 para = para_init();
 [BS_array, RIS_array] = generate_arrays(para);
@@ -134,7 +133,7 @@ parfor mc = 1:para.MC_MAX
         obj_history_dris(:, mc) = NaN;
     end
 end
-% diary off 
+
 toc;
 
 % Calculate averages (excluding NaN runs)

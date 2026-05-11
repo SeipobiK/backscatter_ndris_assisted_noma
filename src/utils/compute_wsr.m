@@ -95,30 +95,30 @@ function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = c
                 alpha_max_weak   = 1 - alpha_min_strong;
                 alpha_max_strong = 1 - alpha_min_weak;
 
-                fprintf('\nCluster %d\n', k);
-                fprintf('Weak user   = %d\n', weak_user);
-                fprintf('Strong user = %d\n', strong_user);
+                % fprintf('\nCluster %d\n', k);
+                % fprintf('Weak user   = %d\n', weak_user);
+                % fprintf('Strong user = %d\n', strong_user);
 
-                fprintf('alpha_weak   range: [%.6f, %.6f]\n', ...
-                    alpha_min_weak, alpha_max_weak);
+                % fprintf('alpha_weak   range: [%.6f, %.6f]\n', ...
+                %     alpha_min_weak, alpha_max_weak);
 
-                fprintf('alpha_strong range: [%.6f, %.6f]\n', ...
-                    alpha_min_strong, alpha_max_strong);
+                % fprintf('alpha_strong range: [%.6f, %.6f]\n', ...
+                %     alpha_min_strong, alpha_max_strong);
 
-                fprintf('Current alpha weak   = %.6f\n', alpha(k,weak_user));
-                fprintf('Current alpha strong = %.6f\n', alpha(k,strong_user));
+                % fprintf('Current alpha weak   = %.6f\n', alpha(k,weak_user));
+                % fprintf('Current alpha strong = %.6f\n', alpha(k,strong_user));
 
 
-                 alpha_ = power_allocation_opt(...
-                 para, H, H_c,decoding_order,w_k);
-                fprintf('Current alpha weak (from assign)  = %.6f\n', alpha_(k,weak_user));
-                fprintf('Current alpha strong (from assign) = %.6f\n', alpha_(k,strong_user));
+                %  alpha_ = power_allocation_opt(...
+                %  para, H, H_c,decoding_order,w_k);
+                % fprintf('Current alpha weak (from assign)  = %.6f\n', alpha_(k,weak_user));
+                % fprintf('Current alpha strong (from assign) = %.6f\n', alpha_(k,strong_user));
 
-                if alpha_min_weak <= alpha_max_weak && alpha_min_strong <= alpha_max_strong
-                    fprintf('Status: FEASIBLE\n');
-                else
-                    fprintf('Status: INFEASIBLE\n');
-                end              
+                % if alpha_min_weak <= alpha_max_weak && alpha_min_strong <= alpha_max_strong
+                %     fprintf('Status: FEASIBLE\n');
+                % else
+                %     fprintf('Status: INFEASIBLE\n');
+                % end              
 
                     order_k = decoding_order(k,:);
  

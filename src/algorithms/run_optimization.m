@@ -103,10 +103,27 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     
     % Extract RIS phase shifts
     Theta = extract_theta(V_opt, para, H, H_c, decoding_order, alpha, w_k);
+
+
     
     % Update effective channels
     [H, H_c] = build_effective_channels(para, channel_data, Theta, J_r, J_t);
-    
+        %     %%  Active beamforming optimization-Algorithm  1
+        % [W_opt, A_abf, B_abf, Ac_abf, Bc_abf, obj_curr, status, ~] = ...
+        %     maximize_sum_rate_iterative_abf(para, H, H_c, channel_data, decoding_order, ...
+        %     A_abf, B_abf, Ac_abf, Bc_abf,alpha,eta);       
+        
+        % w_k = extract_beamforming_vectors(W_opt); 
+
+                
+        % %% Passive beamforming optimization-Algorithm 2
+        % [V_opt, A_pbf, B_pbf, Ac_pbf, Bc_pbf, ~, SR, converged] = ...
+        %     maximize_sum_rate_iterative_pbf(para, w_k, channel_data, decoding_order, ...
+        %     A_pbf, B_pbf, Ac_pbf, Bc_pbf,alpha, J_r, J_t,eta);
+        
+        %     % % Extract RIS phase shifts
+        % Theta = extract_theta(V_opt, para, H, H_c, decoding_order,alpha, w_k);
+        %     [H, H_c] = build_effective_channels(para, channel_data, Theta, J_r, J_t);
     % Update decoding order
     [decoding_order,gains_it] = determine_decoding_order(para, H, w_k);
     alpha = assign_power_by_decoding_order(para, decoding_order);
@@ -123,7 +140,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     rate_f_history(:, 1) = R(:, 2);
     rate_n_history(:, 1) = R(:, 1);
     rate_c_history(:, 1) = R_c;
-    eta_history(:, 1) = eta;
+    eta_history(:, 1) = para.eta;
     w_k_history(:, :, 1) = w_k;
     theta_history(:, :, 1) = Theta;
     

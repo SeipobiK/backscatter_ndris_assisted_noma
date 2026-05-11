@@ -134,7 +134,7 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] =sca_rate_max
                                 *(diag(channel_data.g_b{k}'*J_r)*J_t*channel_data.H_all*w_k(:,k))'));
                             % Backscatter signal constraint
                             signal_c = eta(k) * real(trace(V * H_c{k,i} * H_c{k,i}'));
-                            inv_pos(A_c(k)) <= signal_c ;
+                            % inv_pos(A_c(k)) <= signal_c ;
 
                             % disp(['intra user  ',num2str( intra )]);
                             

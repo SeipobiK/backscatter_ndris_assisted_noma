@@ -5,30 +5,6 @@ function [Rates,obj_history, w_k_history, theta_history, ...
           intra_cluster_history, inter_cluster_history, ...
           inter_cluster_BST_history, inter_cluster_BST_all_history, ...
           decoding_order_history, alpha_history,gains_it_history,eta_history] = run_optimization_fixed_pacrc(para, channel_data, J_r, J_t)
-    % run_optimization - Main optimization function for both DRIS and NDRIS
-    % Input:
-    %   para - simulation parameters
-    %   channel_data - preprocessed channel data
-    %   J_r - receiving RIS matrix (identity for DRIS, optimized for NDRIS)
-    %   J_t - transmitting RIS matrix (identity for DRIS, optimized for NDRIS)
-    % Output:
-    %   obj_history - WSR history (outer_iter+1 x 1)
-    %   w_k_history - beamforming vectors history (M x K x (outer_iter+1))
-    %   theta_history - RIS phase shifts history (N x N x (outer_iter+1))
-    %   rate_f_history - far user rates history (K x (outer_iter+1))
-    %   rate_n_history - near user rates history (K x (outer_iter+1))
-    %   rate_c_history - common rate history (K x (outer_iter+1))
-    %   noma_signal_history - NOMA signal power history (K x K_c x (outer_iter+1))
-    %   BST_signal_history - BST signal power history (K x (outer_iter+1))
-    %   noma_interference_history - NOMA interference history (K x K_c x (outer_iter+1))
-    %   BST_interference_history - BST interference history (K x (outer_iter+1))
-    %   intra_cluster_history - intra-cluster interference (K x K_c x (outer_iter+1))
-    %   inter_cluster_history - inter-cluster interference (K x K_c x (outer_iter+1))
-    %   inter_cluster_BST_history - inter-cluster BST interference (K x K_c x (outer_iter+1))
-    %   inter_cluster_BST_all_history - total inter-cluster BST interference (K x K_c x (outer_iter+1))
-    %   decoding_order_history - decoding order history (K x K_c x (outer_iter+1))
-    %   alpha_f - far user power allocation
-    %   alpha_n - near user power allocation
     
     outer_iter = para.outer_iter;
     N = para.N;
@@ -93,7 +69,8 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     % Passive BF feasibility
     [V_opt, A_pbf, B_pbf, Ac_pbf, Bc_pbf, obj_curr, status] = ...
         optimize_feasibility_pbf(para, w_k, channel_data, decoding_order, ...
-        A_abf, B_abf, Ac_abf, Bc_abf, J_r, J_t, alpha,eta);
+        A_abf, B_abf, Ac_abf, Ac_abf, J_r, J_t, alpha,eta);
+    
 
     % [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = ...
     %     sca_rate_max_pbf_init(para, w_k, channel_data, decoding_order, ...
@@ -154,6 +131,15 @@ function [Rates,obj_history, w_k_history, theta_history, ...
         
         w_k = extract_beamforming_vectors(W_opt); 
 
+        % [~, ~, ~, ~, ~, ~, ~, slack_report, slacks, duals] = ...
+        %       check_constraints_abf(para, channel_data, H, H_c, ...
+        %  A_abf, B_abf, Ac_abf, Bc_abf, decoding_order, alpha, eta); 
+
+
+        % [~, ~, ~, ~, ~, ~, ~, slack_report, slacks] = ...
+        %     check_constraints_pbf(para, w_k, channel_data, decoding_order, ...
+        %  A_pbf, B_pbf, Ac_pbf, Bc_pbf, alpha, J_r, J_t, eta)
+
                 
         %% Passive beamforming optimization-Algorithm 2
         [V_opt, A_pbf, B_pbf, Ac_pbf, Bc_pbf, ~, SR, converged] = ...
@@ -165,6 +151,8 @@ function [Rates,obj_history, w_k_history, theta_history, ...
    
             % Update effective channels
             [H, H_c] = build_effective_channels(para, channel_data, Theta, J_r, J_t);
+
+
 
             % [H, H_c] = build_effective_channels(para, channel_data, Theta, J_r, J_t);
 

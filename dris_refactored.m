@@ -1,288 +1,208 @@
-clear all; clc;
-addpath(genpath(pwd));
-rng(2022); % For reproducibility
+function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status, dual_vars] = ...
+    sca_rate_max_pbf11(para, w_k, channel_data, decoding_order, ...
+    A_prev, B_prev, A_c_prev, B_c_prev, alpha, J_r, J_t, V_max, epsln_1, eta)
 
-% Initialize parameters
-para = para_init();
-[BS_array, RIS_array] = generate_arrays(para);
+    %% Parameters
+    K       = para.K;
+    K_c     = para.K_c;
+    N       = para.N;
+    noise   = para.noise;
+    R_min   = para.R_min_n;
+    R_min_c = para.R_min_c;
+    eh      = para.bst_threshold;
+    rho     = para.rho;
 
-% Constants
-outer_iter = para.outer_iter;
-MC_MAX = para.MC_MAX;
-K = para.K;
-K_c = para.K_c;
-N = para.N;
-M = para.M;
-num_mc_iterations = MC_MAX;
+    %% Precompute cascaded channels
+    H   = cell(K, K_c);
+    H_c = cell(K, K_c);
 
-% Preallocate results for DRIS and NDRIS
-obj_history_dris = zeros(outer_iter+1, MC_MAX);
-obj_history_ndris = zeros(outer_iter+1, MC_MAX);
+    for k = 1:K
+        for i = 1:K_c
+            H{k,i} = diag(channel_data.g{k,i}' * J_r) * ...
+                     J_t * channel_data.H_all * w_k(:,k);
 
-w_k_dris = zeros(M, K, outer_iter+1, MC_MAX);
-w_k_ndris = zeros(M, K, outer_iter+1, MC_MAX);
-
-theta_dris = zeros(N, N, outer_iter+1, MC_MAX);
-theta_ndris = zeros(N, N, outer_iter+1, MC_MAX);
-
-rate_f_mc_dris_outer = zeros(K, outer_iter+1, MC_MAX);
-rate_n_mc_dris_outer = zeros(K, outer_iter+1, MC_MAX);
-rate_c_mc_dris_outer = zeros(K, outer_iter+1, MC_MAX);
-
-rate_f_mc_ndris_outer = zeros(K, outer_iter+1, MC_MAX);
-rate_n_mc_ndris_outer = zeros(K, outer_iter+1, MC_MAX);
-rate_c_mc_ndris_outer = zeros(K, outer_iter+1, MC_MAX);
-
-% Interference and signal metrics for DRIS
-noma_signal_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
-rates_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
-rates_ndris = zeros(K, K_c, outer_iter+1, MC_MAX);
-BST_signal_dris = zeros(K, outer_iter+1, MC_MAX);
-noma_interference_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
-BST_interference_dris = zeros(K, outer_iter+1, MC_MAX);
-intra_cluster_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
-inter_cluster_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
-inter_cluster_BST_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
-inter_cluster_BST_all_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
-decoding_order_dris = zeros(K, K_c, outer_iter+1, MC_MAX);
-
-% Interference and signal metrics for NDRIS
-noma_signal_ndris = zeros(K, K_c, outer_iter+1, MC_MAX);
-BST_signal_ndris = zeros(K, outer_iter+1, MC_MAX);
-noma_interference_ndris = zeros(K, K_c, outer_iter+1, MC_MAX);
-BST_interference_ndris = zeros(K, outer_iter+1, MC_MAX);
-intra_cluster_ndris = zeros(K, K_c, outer_iter+1, MC_MAX);
-inter_cluster_ndris = zeros(K, K_c, outer_iter+1, MC_MAX);
-inter_cluster_BST_ndris = zeros(K, K_c, outer_iter+1, MC_MAX);
-inter_cluster_BST_all_ndris = zeros(K, K_c, outer_iter+1, MC_MAX);
-decoding_order_ndris = zeros(K, K_c, outer_iter+1, MC_MAX);
-
-alpha_f_mc_dris = zeros(K, MC_MAX);
-alpha_n_mc_dris = zeros(K, MC_MAX);
-alpha_f_mc_ndris = zeros(K, MC_MAX);
-alpha_n_mc_ndris = zeros(K, MC_MAX);
-
-rng_seeds = randi(1e6, MC_MAX, 1);
-
-% Create results directory
-results_dir = 'results_passive';
-if ~exist(results_dir, 'dir')
-    mkdir(results_dir);
-end
-
-% Start parallel pool
-if isempty(gcp('nocreate'))
-    num_workers = 14;
-    pool = parpool('local', num_workers);
-    fprintf('Using %d workers for parallel processing\n', pool.NumWorkers);
-else
-    pool = gcp;
-    fprintf('Existing pool with %d workers found\n', pool.NumWorkers);
-end
-
-tic;
-[BS_array_par, RIS_array_par] = generate_arrays(para);
-
-%% MAIN MONTE CARLO LOOP
-fprintf('Starting Monte Carlo iterations...\n');
-
-parfor mc = 1:num_mc_iterations
-    try
-        fprintf('Monte Carlo Iteration %d/%d\n', mc, num_mc_iterations);
-        
-        % Set random seed for reproducibility
-        rng(rng_seeds(mc), 'twister');
-        
-        % Generate channels
-        [H_local, g_local, f_local] = generate_channel(para, BS_array_par, RIS_array_par);
-        
-        % Preprocess channels
-        channel_data = preprocess_channels(para, H_local, g_local, f_local);
-        
-        %% Run DRIS (J matrices are identity)
-        J_r_dris = eye(N);
-        J_t_dris = eye(N);
-        
-        [Rates_dris,obj_history_dris_mc, w_k_dris_mc, theta_dris_mc, ...
-         rate_f_dris, rate_n_dris, rate_c_dris, ...
-         noma_signal_dris_mc, BST_signal_dris_mc, ...
-         noma_interference_dris_mc, BST_interference_dris_mc, ...
-         intra_cluster_dris_mc, inter_cluster_dris_mc, ...
-         inter_cluster_BST_dris_mc, inter_cluster_BST_all_dris_mc, ...
-         decoding_order_dris_mc, alpha_f_dris, alpha_n_dris] = ...
-         run_optimization(para, channel_data, J_r_dris, J_t_dris);
-        
-        % Store DRIS results
-        obj_history_dris(:, mc) = obj_history_dris_mc;
-        w_k_dris(:, :, :, mc) = w_k_dris_mc;
-        theta_dris(:, :, :, mc) = theta_dris_mc;
-        rate_f_mc_dris_outer(:, :, mc) = rate_f_dris;
-        rate_n_mc_dris_outer(:, :, mc) = rate_n_dris;
-        rate_c_mc_dris_outer(:, :, mc) = rate_c_dris;
-        rates_dris(:, :, :, mc) = Rates_dris;
-        
-        noma_signal_dris(:, :, :, mc) = noma_signal_dris_mc;
-        BST_signal_dris(:, :, mc) = BST_signal_dris_mc;
-        noma_interference_dris(:, :, :, mc) = noma_interference_dris_mc;
-        BST_interference_dris(:, :, mc) = BST_interference_dris_mc;
-        intra_cluster_dris(:, :, :, mc) = intra_cluster_dris_mc;
-        inter_cluster_dris(:, :, :, mc) = inter_cluster_dris_mc;
-        inter_cluster_BST_dris(:, :, :, mc) = inter_cluster_BST_dris_mc;
-        inter_cluster_BST_all_dris(:, :, :, mc) = inter_cluster_BST_all_dris_mc;
-        decoding_order_dris(:, :, :, mc) = decoding_order_dris_mc;
-        
-        % alpha_f_mc_dris(:, mc) = alpha_f_dris;
-        % alpha_n_mc_dris(:, mc) = alpha_n_dris;
-        
-        % % NDRIS: Optimized J matrices
-        g_LOS_reshaped = reshape(g_local, para.N, []);
-        J_r_ndris = design_J_r(g_LOS_reshaped);
-        J_t_ndris = design_J_t(H_local);
-
-        
-        [Rates_ndris,obj_history_ndris_mc, w_k_ndris_mc, theta_ndris_mc, ...
-         rate_f_ndris, rate_n_ndris, rate_c_ndris, ...
-         noma_signal_ndris_mc, BST_signal_ndris_mc, ...
-         noma_interference_ndris_mc, BST_interference_ndris_mc, ...
-         intra_cluster_ndris_mc, inter_cluster_ndris_mc, ...
-         inter_cluster_BST_ndris_mc, inter_cluster_BST_all_ndris_mc, ...
-         decoding_order_ndris_mc, alpha_f_ndris, alpha_n_ndris] = ...
-         run_optimization(para, channel_data, J_r_ndris, J_t_ndris);
-        
-        % Store NDRIS results
-        obj_history_ndris(:, mc) = obj_history_ndris_mc;
-        w_k_ndris(:, :, :, mc) = w_k_ndris_mc;
-        theta_ndris(:, :, :, mc) = theta_ndris_mc;
-        rate_f_mc_ndris_outer(:, :, mc) = rate_f_ndris;
-        rate_n_mc_ndris_outer(:, :, mc) = rate_n_ndris;
-        rate_c_mc_ndris_outer(:, :, mc) = rate_c_ndris;
-        rates_ndris(:, :, :, mc) = Rates_ndris;
-        
-        noma_signal_ndris(:, :, :, mc) = noma_signal_ndris_mc;
-        BST_signal_ndris(:, :, mc) = BST_signal_ndris_mc;
-        noma_interference_ndris(:, :, :, mc) = noma_interference_ndris_mc;
-        BST_interference_ndris(:, :, mc) = BST_interference_ndris_mc;
-        intra_cluster_ndris(:, :, :, mc) = intra_cluster_ndris_mc;
-        inter_cluster_ndris(:, :, :, mc) = inter_cluster_ndris_mc;
-        inter_cluster_BST_ndris(:, :, :, mc) = inter_cluster_BST_ndris_mc;
-        inter_cluster_BST_all_ndris(:, :, :, mc) = inter_cluster_BST_all_ndris_mc;
-        decoding_order_ndris(:, :, :, mc) = decoding_order_ndris_mc;
-        
-        alpha_f_mc_ndris(:, mc) = alpha_f_ndris;
-        alpha_n_mc_ndris(:, mc) = alpha_n_ndris;
-        
-        disp(['MC ', num2str(mc), ' completed - Final DRIS WSR: ', num2str(obj_history_dris_mc(end)), ...
-              ', Final NDRIS WSR: ', num2str(obj_history_ndris_mc(end))]);
-        
-    catch ME
-        fprintf('Error in MC run %d: %s\n', mc, ME.message);
-        fprintf('Stack trace:\n');
-        for i = 1:length(ME.stack)
-            fprintf('  %s at line %d\n', ME.stack(i).name, ME.stack(i).line);
+            H_c{k,i} = diag(channel_data.g_b{k}' * J_r) * ...
+                       J_t * channel_data.H_all * ...
+                       channel_data.f{k,i} * w_k(:,k);
         end
-        obj_history_dris(:, mc) = NaN;
-        obj_history_ndris(:, mc) = NaN;
     end
+
+    %% CVX optimization
+    cvx_begin quiet
+        cvx_solver mosek
+
+        %% Variables
+        variable V(N,N) hermitian semidefinite
+        variable A(K,K_c) nonnegative
+        variable B(K,K_c) nonnegative
+        variable A_c(K) nonnegative
+        variable B_c(K) nonnegative
+        variable R_c(K) nonnegative
+        variable R(K,K_c) nonnegative
+
+        %% Dual variables
+        dual variable lambda_rank
+        dual variables lambda_diag{N}
+
+        dual variables lambda_rate{K,K_c}
+        dual variables lambda_qos{K,K_c}
+        dual variables lambda_signal{K,K_c}
+        dual variables lambda_interf{K,K_c}
+
+        dual variables lambda_eh{K}
+        dual variables lambda_c_signal{K}
+        dual variables lambda_c_rate{K}
+        dual variables lambda_c_interf{K}
+        dual variables lambda_c_qos{K}
+
+        %% Objective
+        sum_rate = 0;
+
+        for k = 1:K
+            for i = 1:K_c
+                sum_rate = sum_rate + R(k,i);
+            end
+            sum_rate = sum_rate + R_c(k);
+        end
+
+        maximize(sum_rate)
+
+        subject to
+
+            %% Rank-one relaxation / penalty constraint
+            lambda_rank : V_max' * V * V_max >= epsln_1 * trace(V);
+
+            %% Unit-modulus diagonal constraints
+            for m = 1:N
+                lambda_diag{m} : V(m,m) == 1;
+            end
+
+            %% Main constraints
+            for k = 1:K
+
+                order_k = decoding_order(k,:);   % weak -> strong
+                strong_user = order_k(end);      % SIC/backscatter decoding user
+
+                for i = 1:K_c
+
+                    %% ---------- SCA RATE CONSTRAINT FOR NOMA USER ----------
+                    lambda_rate{k,i} : R(k,i) <= ...
+                        log2(1 + 1/(A_prev(k,i) * B_prev(k,i))) ...
+                        - (log2(exp(1)) / ...
+                        (A_prev(k,i) * (1 + A_prev(k,i) * B_prev(k,i)))) ...
+                        * (A(k,i) - A_prev(k,i)) ...
+                        - (log2(exp(1)) / ...
+                        (B_prev(k,i) * (1 + A_prev(k,i) * B_prev(k,i)))) ...
+                        * (B(k,i) - B_prev(k,i));
+
+                    %% ---------- NOMA QoS CONSTRAINT ----------
+                    lambda_qos{k,i} : R(k,i) >= R_min;
+
+                    %% ---------- INTER-CLUSTER INTERFERENCE ----------
+                    inter = 0;
+                    inter_b = 0;
+
+                    for j = 1:K
+                        if j ~= k
+
+                            h_inter = diag(channel_data.g{k,i}' * J_r) * ...
+                                      J_t * channel_data.H_all * w_k(:,j);
+
+                            inter = inter + real(trace(V * (h_inter * h_inter')));
+
+                            h_inter_b = diag(channel_data.g_b{k}' * J_r) * ...
+                                        J_t * channel_data.H_all * ...
+                                        channel_data.f{k,i} * w_k(:,j);
+
+                            inter_b = inter_b + ...
+                                      real(trace(V * (h_inter_b * h_inter_b'))) ...
+                                      * eta(j);
+                        end
+                    end
+
+                    %% ---------- INTRA-CLUSTER NOMA INTERFERENCE ----------
+                    intra = 0;
+
+                    pos = find(order_k == i);
+
+                    h_i = H{k,i};
+                    H_i = h_i * h_i';
+
+                    for idx = pos+1:K_c
+                        j_user = order_k(idx);
+                        intra = intra + alpha(k,j_user) * real(trace(V * H_i));
+                    end
+
+                    %% ---------- NOMA SIGNAL CONSTRAINT ----------
+                    signal = alpha(k,i) * real(trace(V * H_i));
+
+                    lambda_signal{k,i} : inv_pos(A(k,i)) <= signal;
+
+                    %% ---------- NOMA INTERFERENCE CONSTRAINT ----------
+                    lambda_interf{k,i} : B(k,i) >= ...
+                        intra + inter + inter_b ...
+                        + eta(k) * real(trace(V * H_c{k,i} * H_c{k,i}')) ...
+                        + noise;
+
+                    %% ---------- BACKSCATTER CONSTRAINTS FOR STRONG USER ----------
+                    if i == strong_user
+
+                        h_eh = diag(channel_data.g_b{k}' * J_r) * ...
+                               J_t * channel_data.H_all * w_k(:,k);
+
+                        %% Energy harvesting constraint
+                        lambda_eh{k} : eh <= ...
+                            (1 - eta(k)) * rho * real(trace(V * (h_eh * h_eh')));
+
+                        %% Backscatter signal constraint
+                        signal_c = eta(k) * real(trace(V * H_c{k,i} * H_c{k,i}'));
+
+                        lambda_c_signal{k} : inv_pos(A_c(k)) <= signal_c;
+
+                        %% SCA rate constraint for backscatter
+                        lambda_c_rate{k} : R_c(k) <= ...
+                            log2(1 + 1/(A_c_prev(k) * B_c_prev(k))) ...
+                            - (log2(exp(1)) / ...
+                            (A_c_prev(k) * (1 + A_c_prev(k) * B_c_prev(k)))) ...
+                            * (A_c(k) - A_c_prev(k)) ...
+                            - (log2(exp(1)) / ...
+                            (B_c_prev(k) * (1 + A_c_prev(k) * B_c_prev(k)))) ...
+                            * (B_c(k) - B_c_prev(k));
+
+                        %% Backscatter interference constraint
+                        lambda_c_interf{k} : B_c(k) >= inter + inter_b + noise;
+
+                        %% Backscatter QoS constraint
+                        lambda_c_qos{k} : R_c(k) >= R_min_c;
+                    end
+                end
+            end
+
+    cvx_end
+
+    %% Outputs
+    obj_prev = cvx_optval;
+    status   = cvx_status;
+
+    V_opt   = V;
+    A_opt   = A;
+    B_opt   = B;
+    A_c_opt = A_c;
+    B_c_opt = B_c;
+
+    %% Store dual variables
+    dual_vars.lambda_rank     = lambda_rank;
+    dual_vars.lambda_diag     = lambda_diag;
+
+    dual_vars.lambda_rate     = lambda_rate;
+    dual_vars.lambda_qos      = lambda_qos;
+    dual_vars.lambda_signal   = lambda_signal;
+    dual_vars.lambda_interf   = lambda_interf;
+
+    dual_vars.lambda_eh       = lambda_eh;
+    dual_vars.lambda_c_signal = lambda_c_signal;
+    dual_vars.lambda_c_rate   = lambda_c_rate;
+    dual_vars.lambda_c_interf = lambda_c_interf;
+    dual_vars.lambda_c_qos    = lambda_c_qos;
+
 end
-
-toc;
-
-% Calculate averages (excluding NaN runs)
-valid_dris = find(~isnan(obj_history_dris(1, :)));
-if ~isempty(valid_dris)
-    avg_dris = mean(obj_history_dris(:, valid_dris), 2);
-    std_dris = std(obj_history_dris(:, valid_dris), 0, 2);
-else
-    avg_dris = NaN(outer_iter+1, 1);
-    std_dris = NaN(outer_iter+1, 1);
-    fprintf('Warning: No valid DRIS runs\n');
-end
-
-valid_ndris = find(~isnan(obj_history_ndris(1, :)));
-if ~isempty(valid_ndris)
-    avg_ndris = mean(obj_history_ndris(:, valid_ndris), 2);
-    std_ndris = std(obj_history_ndris(:, valid_ndris), 0, 2);
-else
-    avg_ndris = NaN(outer_iter+1, 1);
-    std_ndris = NaN(outer_iter+1, 1);
-    fprintf('Warning: No valid NDRIS runs\n');
-end
-
-% Plot comparison with error bars
-fig = figure;
-x = 0:outer_iter;
-
-% DRIS plot with error bars
-errorbar(x, avg_dris, std_dris, '-s', 'DisplayName', 'DRIS', ...
-    'LineWidth', 2, 'MarkerSize', 8, 'Color', [0.2, 0.2, 0.8], ...
-    'CapSize', 10);
-hold on;
-
-% NDRIS plot with error bars
-if ~all(isnan(avg_ndris))
-    errorbar(x, avg_ndris, std_ndris, '-o', 'DisplayName', 'NDRIS', ...
-        'LineWidth', 2, 'MarkerSize', 8, 'Color', [0.8, 0.2, 0.2], ...
-        'CapSize', 10);
-end
-
-hold off;
-legend('Location', 'southeast');
-xlabel('Iteration Number');
-ylabel('Average Weighted Sum Rate (bps/Hz)');
-title(sprintf('DRIS vs NDRIS: M=%d, N=%d, K=%d, K_c=%d', M, N, K, K_c));
-grid on;
-xlim([0, outer_iter]);
-xticks(0:outer_iter);
-
-% ============================
-% Generate timestamp + filenames
-% ============================
-timestamp = datestr(now, 'yyyymmdd_HHMMSS');
-
-filename = sprintf('dris_vs_ndris_M%d_N%d_K%d_%s.mat', M, N, K, timestamp);
-filename_all = sprintf('full_workspace_dris_vs_ndris_M%d_N%d_%s.mat', M, N, timestamp);
-filename_plot = sprintf('convergence_dris_vs_ndris_M%d_N%d_%s.png', M, N, timestamp);
-
-% Save results structure
-results.obj_history_dris = obj_history_dris;
-results.obj_history_ndris = obj_history_ndris;
-results.avg_dris = avg_dris;
-results.avg_ndris = avg_ndris;
-results.std_dris = std_dris;
-results.std_ndris = std_ndris;
-results.para = para;
-results.valid_dris = valid_dris;
-results.valid_ndris = valid_ndris;
-
-% Also save interference metrics if needed
-results.noma_signal_dris = noma_signal_dris;
-results.intra_cluster_dris = intra_cluster_dris;
-results.inter_cluster_dris = inter_cluster_dris;
-% Add other metrics as needed
-
-% ============================
-% Build folder structure
-% ============================
-base_folder = 'results';
-year_str = datestr(now, 'yyyy');
-month_str = lower(datestr(now, 'mmm'));
-day_str = datestr(now, 'dd');
-output_folder = fullfile(base_folder, year_str, month_str, day_str);
-
-% Create folder if it does not exist
-if ~exist(output_folder, 'dir')
-    mkdir(output_folder);
-end
-
-% ============================
-% Save files inside the folder
-% ============================
-save(fullfile(output_folder, filename_all), '-v7.3');
-save(fullfile(output_folder, filename), 'results');
-saveas(fig, fullfile(output_folder, filename_plot));
-
-fprintf('\nResults saved in: %s\n', fullfile(output_folder, filename));
-fprintf('Workspace saved in: %s\n', fullfile(output_folder, filename_all));
-fprintf('Plot saved in: %s\n', fullfile(output_folder, filename_plot));
-fprintf('Valid DRIS runs: %d/%d\n', length(valid_dris), MC_MAX);
-fprintf('Valid NDRIS runs: %d/%d\n', length(valid_ndris), MC_MAX);

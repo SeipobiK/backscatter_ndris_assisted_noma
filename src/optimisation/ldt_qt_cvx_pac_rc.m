@@ -131,10 +131,10 @@ function [p_alloc, eta, obj] = ldt_qt_cvx_pac_rc(...
                         (bd_interf_BD + I_tot(k,i));
 
                     %% Energy harvesting constraint
-                    if eh_min > 0
+                    % if eh_min > 0
                         h_eh = abs(h_c_eh{k,i} * w_k(:,k))^2;
                         (1 - eta_var(k)) * rho_eh * h_eh >= eh_min;
-                    end
+                    % end
 
                 end
             end % i
