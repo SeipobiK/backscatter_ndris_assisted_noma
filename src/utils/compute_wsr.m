@@ -105,14 +105,14 @@ function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = c
                 % fprintf('alpha_strong range: [%.6f, %.6f]\n', ...
                 %     alpha_min_strong, alpha_max_strong);
 
-                % fprintf('Current alpha weak   = %.6f\n', alpha(k,weak_user));
-                % fprintf('Current alpha strong = %.6f\n', alpha(k,strong_user));
+                fprintf('Current alpha weak   = %.6f\n', alpha(k,weak_user));
+                fprintf('Current alpha strong = %.6f\n', alpha(k,strong_user));
 
 
-                %  alpha_ = power_allocation_opt(...
-                %  para, H, H_c,decoding_order,w_k);
-                % fprintf('Current alpha weak (from assign)  = %.6f\n', alpha_(k,weak_user));
-                % fprintf('Current alpha strong (from assign) = %.6f\n', alpha_(k,strong_user));
+                 alpha_ = power_allocation_opt(...
+                 para, H, H_c,decoding_order,w_k);
+                fprintf('Current alpha weak (from assign)  = %.6f\n', alpha_(k,weak_user));
+                fprintf('Current alpha strong (from assign) = %.6f\n', alpha_(k,strong_user));
 
                 % if alpha_min_weak <= alpha_max_weak && alpha_min_strong <= alpha_max_strong
                 %     fprintf('Status: FEASIBLE\n');
@@ -139,8 +139,8 @@ function [sum_rate,R,R_c,A,A_c,B,B_c,intra_i,inteer_i,inteer_b,inteer_b_all] = c
             
 
                     intra_i(k, i)=intra; % Initialize A_n vector
-                    inteer_i(k, i) = inter + noise + inter_b + abs(H_c{k,i}*w_k(:, k)).^2* eta(k); % Initialize B_n vector
-                    inteer_b(k, i) = A(k,i)/B(k,i); % Initialize B_n vector
+                    inteer_i(k, i) = inter + noise; % Initialize B_n vector
+                    inteer_b(k, i) =inter_b; % Initialize B_n vector
                     inteer_b_all(k, i) = inter_b + abs(H_c{k,i}*w_k(:, k)).^2* eta(k); % Initialize B_n vector
             end
         end

@@ -5,17 +5,17 @@ function [values] = para_init()
     % Basic Parameter2
     % ===============================
     values.noise_dB = -90; % noise power spectral density in dBW/Hz
-    values.scall=600;
+    values.scall=500;
     % values.noise = 10^((vals.noise_dB - 30)/10) * (62500000000); 
     % values.noise = 10^(values.noise_dB/10)* (200)^4; 
-    values.noise = (1e-12) * (600)^4; % override with fixed scaling
+    values.noise = (1e-12) * (500)^4; % override with fixed scaling
 
     values.alpha_k_n = 0.2;
     values.alpha_k_f = 0.8;
     values.FT=2;
-    values.rho=0.8;
+    values.rho=0.6;
     values.epsilon=1e-6;
-    values.bst_threshold=0.0000010000;
+    values.bst_threshold=0.000010000;
 
     % User weights
     values.weights_n = 1; % near user
@@ -24,7 +24,7 @@ function [values] = para_init()
     values.weights = [0.2, 0.3, 0.3, 0.2]; % example custom weights
 
     % System dimensions
-    values.K_u = 5; % users per cluster
+    values.K_u = 3; % users per cluster
     values.K_c = 2; % NOMA users per cluster
     values.K = 2;   % number of clusters
     values.M =8;   % antennas at BS
@@ -33,8 +33,8 @@ function [values] = para_init()
 
     % Power and rate requirements
 
-    values.P_max =100; % maximum transmit power in Watts
-    values.eta =[0.5,0.5]; % backscatter coefficient
+    values.P_max =10; % maximum transmit power in Watts
+    values.eta =[0.7,0.7]; % backscatter coefficient
     % values.R_min_f = 0.001; 
     values.R_min_n = 1;
     values.R_c_min = 0.5; 
@@ -48,9 +48,9 @@ function [values] = para_init()
     
 
     % Iterations
-    values.MC_MAX =10;
-    values.outer_iter = 15; 
-    values.max_iter = 20; 
+    values.MC_MAX =200;
+    values.outer_iter = 20; 
+    values.max_iter = 15; 
     values.tol = 1e-5; 
 
     values.pathloss = @(d) 30 + 22*log10(d); 

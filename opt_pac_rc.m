@@ -1,6 +1,6 @@
 clear all; clc;
 addpath(genpath(pwd));
-rng(); % For reproducibility
+rng(2022); % For reproducibility
 
 % Initialize parameters
 para = para_init();
@@ -91,6 +91,7 @@ parfor mc = 1:para.MC_MAX
          inter_cluster_BST_dris_mc, inter_cluster_BST_all_dris_mc, ...
          decoding_order_dris_mc, alpha_history_dris_mc,gains_it_history_dris_mc,eta_history_dris_mc] = ...
          run_optimization(para, channel_data, J_r_dris, J_t_dris);
+         
         %  disp(size(obj_history_dris_mc));
         
         % Store DRIS results
@@ -133,7 +134,6 @@ parfor mc = 1:para.MC_MAX
         obj_history_dris(:, mc) = NaN;
     end
 end
-
 toc;
 
 % Calculate averages (excluding NaN runs)
@@ -146,6 +146,36 @@ else
     std_dris = NaN(outer_iter+1, 1);
     fprintf('Warning: No valid DRIS runs\n');
 end
+
+valid_mc = valid_dris;
+
+num_valid = length(valid_mc);
+outage_count = 0;
+
+for idx = 1:num_valid
+
+    mc = valid_mc(idx);
+
+    % Final rates from last AO iteration
+    Rn_final = rate_n_mc_dris_outer(:, end, mc);
+    Rf_final = rate_f_mc_dris_outer(:, end, mc);
+    Rc_final = rate_c_mc_dris_outer(:, end, mc);
+
+    % Check outage
+    noma_outage = any(Rn_final < para.R_min_n) || ...
+                  any(Rf_final < para.R_min_n);
+
+    bst_outage = any(Rc_final < 0.1);
+
+    if noma_outage || bst_outage
+        outage_count = outage_count + 1;
+    end
+end
+
+P_out = outage_count / num_valid;
+
+fprintf('Outage Probability = %.4f\n', P_out);
+fprintf('Valid MC runs used = %d\n', num_valid);
 
 % Plot results with error bars
 fig = figure;
@@ -220,3 +250,5 @@ fprintf('\nResults saved in: %s\n', fullfile(output_folder, filename));
 fprintf('Workspace saved in: %s\n', fullfile(output_folder, filename_all));
 fprintf('Plot saved in: %s\n', fullfile(output_folder, filename_plot));
 fprintf('Valid DRIS runs: %d/%d\n', length(valid_dris), MC_MAX);
+
+

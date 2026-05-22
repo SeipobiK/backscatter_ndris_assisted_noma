@@ -140,7 +140,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
     rate_f_history(:, 1) = R(:, 2);
     rate_n_history(:, 1) = R(:, 1);
     rate_c_history(:, 1) = R_c;
-    eta_history(:, 1) = para.eta;
+    eta_history(:, 1) = para.eta(1);
     w_k_history(:, :, 1) = w_k;
     theta_history(:, :, 1) = Theta;
     

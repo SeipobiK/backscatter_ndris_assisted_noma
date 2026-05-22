@@ -92,6 +92,9 @@ function [H, g, f] = generate_channel(para, BS_array, RIS_array)
             
             % Path loss (convert from dB to linear)
             pl = sqrt(10^(-para.pathloss(dist)/10));
+            disp(['User ', num2str(k), ' in Cluster ', num2str(c), ' distance: ', num2str(dist), ' m, path loss: ', num2str(pl)]);
+
+            % pl=1; % For testing without path loss
             
             % Small-scale Rayleigh fading (MIMO channel: M antennas)
             % Use MIMO Rayleigh fading (M x 1 vector for each user)
