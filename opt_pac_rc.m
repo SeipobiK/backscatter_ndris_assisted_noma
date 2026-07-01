@@ -66,8 +66,8 @@ tic;
 fprintf('Starting Monte Carlo iterations...\n');
 num_mc_iterations=1;
 
-parfor mc = 1:para.MC_MAX
-    try
+for mc = 1:para.MC_MAX
+    % try
         fprintf('Monte Carlo Iteration %d/%d\n', mc, num_mc_iterations);
         
         % Set random seed for reproducibility
@@ -90,7 +90,7 @@ parfor mc = 1:para.MC_MAX
          intra_cluster_dris_mc, inter_cluster_dris_mc, ...
          inter_cluster_BST_dris_mc, inter_cluster_BST_all_dris_mc, ...
          decoding_order_dris_mc, alpha_history_dris_mc,gains_it_history_dris_mc,eta_history_dris_mc] = ...
-         run_optimization(para, channel_data, J_r_dris, J_t_dris);
+         bd_ris_opt(para, channel_data, J_r_dris, J_t_dris);
          
         %  disp(size(obj_history_dris_mc));
         
@@ -125,14 +125,14 @@ parfor mc = 1:para.MC_MAX
         % disp(Rates_dris);
         % disp('Objective history for DRIS: ');
         % disp(obj_history_dris_mc);
-    catch ME
-        fprintf('Error in MC run %d: %s\n', mc, ME.message);
-        fprintf('Stack trace:\n');
-        for i = 1:length(ME.stack)
-            fprintf('  %s at line %d\n', ME.stack(i).name, ME.stack(i).line);
-        end
-        obj_history_dris(:, mc) = NaN;
-    end
+    % catch ME
+    %     fprintf('Error in MC run %d: %s\n', mc, ME.message);
+    %     fprintf('Stack trace:\n');
+    %     for i = 1:length(ME.stack)
+    %         fprintf('  %s at line %d\n', ME.stack(i).name, ME.stack(i).line);
+    %     end
+    %     obj_history_dris(:, mc) = NaN;
+    % end
 end
 toc;
 

@@ -194,7 +194,7 @@ function [Rates,obj_history, w_k_history, theta_history, ...
             end
             % disp(['After ABF and PBF optimization, before eta update: WSR = ', num2str(sum_rate_)]);   
 
-            [eta,alpha]  = solve_eta_AO(para, H, H_c,h_c_eh, decoding_order, alpha, w_k,eta);
+        [eta,alpha]  = solve_eta_AO(para, H, H_c,h_c_eh, decoding_order, alpha, w_k,eta);
         
         %% Update decoding order
         [decoding_order,gains_it]= determine_decoding_order(para, H, w_k);

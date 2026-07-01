@@ -325,7 +325,7 @@ function [V_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] =sca_rate_max
                                 inter   = inter  + real(trace(V * (diag(channel_data.g{k,i}'*J_r)*J_t*channel_data.H_all*w_k(:, j)) ...
                                 *(diag(channel_data.g{k,i}'*J_r)*J_t*channel_data.H_all*w_k(:, j))'));
                                 inter_b = inter_b + real(trace(V * ( diag(channel_data.g_b{k}'*J_r)*J_t*channel_data.H_all * channel_data.f{k,i}*w_k(:,j))...
-                                *(diag(channel_data.g_b{k}'*J_r)*J_t*channel_data.H_all * channel_data.f{k,i}*w_k(:,j))')) * eta(j);
+                                *(diag(channel_data.g_b{k}'*J_r)*J_t*channel_data.H_all * channel_data.f{k,i}*w_k(:,j))')) * eta(k);
                             end
                         end
                         

@@ -83,7 +83,7 @@ function [W_opt, A_opt, B_opt, A_c_opt, B_c_opt, obj_prev, status] = sca_feasibl
                         for j = 1:K
                             if j ~= k
                                 inter   = inter  + real(trace(W(:,:,j) * H{k,i}'*H{k,i}));
-                                inter_b = inter_b + real(trace(W(:,:,j) * H_c{k,i}'*H_c{k,i})) * eta(j);
+                                inter_b = inter_b + real(trace(W(:,:,j) * H_c{k,i}'*H_c{k,i})) * eta(k);
                             end
                         end
 
